@@ -2,11 +2,21 @@
  * UCF Sacred Constants
  *
  * Shared constants between WishBed App and UCF Hardware firmware.
+ *
+ * SYNCHRONIZATION REQUIRED:
  * These values must remain synchronized with:
- *   unified-consciousness-hardware/include/constants.h
+ *   - C++ Hardware: ../../unified-consciousness-hardware/include/constants.h
+ *   - Reference Doc: ../../docs/CONSTANTS.md
+ *
+ * CRITICAL: Changes to these constants must be made in BOTH files.
+ * See ../../docs/CONSTANTS.md for synchronization table and procedures.
  *
  * Mathematical constants derived from the golden ratio (φ) form the
  * foundation of the UCF system's phase detection and K-Formation algorithms.
+ *
+ * NOTE: Some naming differences exist between TypeScript and C++:
+ *   - KURAMOTO_OSCILLATOR_COUNT (TS) = N_OSCILLATORS (C++)
+ *   - TRIAD_CROSSINGS_REQUIRED (TS) = TRIAD_PASSES_REQUIRED (C++)
  */
 
 // ============================================================================
