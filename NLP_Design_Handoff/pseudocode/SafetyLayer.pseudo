@@ -1,0 +1,395 @@
+/**
+ * SafetyLayer Pseudocode
+ *
+ * This module enforces all system invariants [INV-1 through INV-5].
+ * NO other module may bypass these checks.
+ *
+ * Requirements: [0005, 0006, 0011-0015]
+ */
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+TYPE ConsentType = "SESSION" | "MICROPHONE" | "RECORDING" | "MESH" | "ANALYTICS"
+TYPE ImpactLevel = "LOW" | "HIGH" | "SYSTEM"
+TYPE ScanResult = "PASS" | "WARN" | "REJECT"
+
+INTERFACE SafetyCaps {
+  brightness: number      // 0.0 - 1.0
+  motionVelocity: number  // 0.0 - 2.0
+  flickerHz: number       // 0 - 30
+  particleDensity: number // 0.0 - 1.0
+}
+
+INTERFACE ConsentState {
+  session: boolean
+  microphone: boolean
+  recording: boolean
+  mesh: boolean
+  analytics: boolean
+  timestamps: Map<ConsentType, Date>
+}
+
+INTERFACE ScanReport {
+  result: ScanResult
+  violations: string[]
+  suggestions: string[]
+}
+
+// ============================================================================
+// SAFETY LAYER MODULE
+// ============================================================================
+
+MODULE SafetyLayer
+
+  // Private state
+  PRIVATE consentState: ConsentState
+  PRIVATE safetyCaps: SafetyCaps
+  PRIVATE emergencyStopActive: boolean = false
+
+  // Default caps [REQ 0013]
+  PRIVATE DEFAULT_CAPS: SafetyCaps = {
+    brightness: 0.8,
+    motionVelocity: 1.0,
+    flickerHz: 10,
+    particleDensity: 0.7
+  }
+
+  // Prohibited patterns [REQ 0015]
+  PRIVATE MEDICAL_PATTERNS: Regex[] = [
+    /cure/i, /heal/i, /treat/i, /therapy/i,
+    /diagnos/i, /medical/i, /clinical/i
+  ]
+
+  PRIVATE GUARANTEE_PATTERNS: Regex[] = [
+    /will (cure|heal|fix|remove)/i,
+    /permanent(ly)?/i, /guarante/i, /proven/i
+  ]
+
+  PRIVATE COERCIVE_PATTERNS: Regex[] = [
+    /you must/i, /you have to/i, /for the weak/i,
+    /real .* don't quit/i, /if you stop.*never/i
+  ]
+
+  // ---------------------------------------------------------------------------
+  // CONSTRUCTOR
+  // ---------------------------------------------------------------------------
+
+  CONSTRUCTOR() {
+    this.consentState = loadConsentState() OR defaultConsentState()
+    this.safetyCaps = loadSafetyCaps() OR this.DEFAULT_CAPS
+  }
+
+  // ---------------------------------------------------------------------------
+  // CONSENT MANAGEMENT [REQ 0005, 0006, INV-2]
+  // ---------------------------------------------------------------------------
+
+  FUNCTION hasConsent(type: ConsentType): boolean {
+    RETURN this.consentState[type] == true
+  }
+
+  ASYNC FUNCTION requestConsent(type: ConsentType): Promise<boolean> {
+    // Display consent dialog
+    LET dialog = ConsentDialog.create(type)
+    LET result = AWAIT dialog.show()
+
+    IF result.granted THEN
+      this.consentState[type] = true
+      this.consentState.timestamps[type] = Date.now()
+      persistConsentState(this.consentState)
+      RETURN true
+    ELSE
+      RETURN false
+    END IF
+  }
+
+  FUNCTION revokeConsent(type: ConsentType): void {
+    this.consentState[type] = false
+    this.consentState.timestamps[type] = Date.now()
+    persistConsentState(this.consentState)
+  }
+
+  // ---------------------------------------------------------------------------
+  // IMPACT CLASSIFICATION [REQ 0006]
+  // ---------------------------------------------------------------------------
+
+  FUNCTION classifyImpact(action: Action): ImpactLevel {
+    SWITCH action.type:
+      CASE "START_SESSION":
+      CASE "END_SESSION":
+      CASE "SHARE_TO_MESH":
+      CASE "PUBLISH_BLUEPRINT":
+      CASE "DELETE_DATA":
+        RETURN "HIGH"
+
+      CASE "EMERGENCY_STOP":
+        RETURN "SYSTEM"
+
+      DEFAULT:
+        RETURN "LOW"
+    END SWITCH
+  }
+
+  FUNCTION requiresConfirmation(action: Action): boolean {
+    RETURN this.classifyImpact(action) == "HIGH"
+  }
+
+  // ---------------------------------------------------------------------------
+  // SAFETY CAPS [REQ 0013]
+  // ---------------------------------------------------------------------------
+
+  FUNCTION getSafetyCaps(): SafetyCaps {
+    RETURN { ...this.safetyCaps }
+  }
+
+  FUNCTION updateSafetyCaps(updates: Partial<SafetyCaps>): void {
+    // Clamp values to valid ranges
+    IF updates.brightness != null THEN
+      this.safetyCaps.brightness = clamp(updates.brightness, 0, 1)
+    END IF
+    IF updates.motionVelocity != null THEN
+      this.safetyCaps.motionVelocity = clamp(updates.motionVelocity, 0, 2)
+    END IF
+    IF updates.flickerHz != null THEN
+      this.safetyCaps.flickerHz = clamp(updates.flickerHz, 0, 30)
+    END IF
+    IF updates.particleDensity != null THEN
+      this.safetyCaps.particleDensity = clamp(updates.particleDensity, 0, 1)
+    END IF
+
+    persistSafetyCaps(this.safetyCaps)
+  }
+
+  FUNCTION applyBrightnessCap(value: number): number {
+    RETURN Math.min(value, this.safetyCaps.brightness)
+  }
+
+  FUNCTION applyMotionCap(velocity: Vector3): Vector3 {
+    LET magnitude = velocity.magnitude()
+    IF magnitude > this.safetyCaps.motionVelocity THEN
+      RETURN velocity.normalize() * this.safetyCaps.motionVelocity
+    END IF
+    RETURN velocity
+  }
+
+  FUNCTION applyFlickerCap(frequency: number): number {
+    RETURN Math.min(frequency, this.safetyCaps.flickerHz)
+  }
+
+  FUNCTION applyDensityCap(density: number): number {
+    RETURN Math.min(density, this.safetyCaps.particleDensity)
+  }
+
+  // ---------------------------------------------------------------------------
+  // EMERGENCY STOP [REQ INV-3]
+  // ---------------------------------------------------------------------------
+
+  FUNCTION triggerEmergencyStop(): void {
+    // Set flag immediately
+    this.emergencyStopActive = true
+
+    // Broadcast to all subsystems
+    EventBus.emit("EMERGENCY_STOP")
+
+    // Log for audit
+    AuditLog.record("EMERGENCY_STOP", Date.now())
+  }
+
+  FUNCTION isEmergencyStopActive(): boolean {
+    RETURN this.emergencyStopActive
+  }
+
+  FUNCTION resetEmergencyStop(): void {
+    this.emergencyStopActive = false
+  }
+
+  // ---------------------------------------------------------------------------
+  // SAFE MINIMAL MODE [REQ 0014]
+  // ---------------------------------------------------------------------------
+
+  FUNCTION enterSafeMinimalMode(): void {
+    // Reduce all caps to minimum
+    this.updateSafetyCaps({
+      brightness: 0.3,
+      motionVelocity: 0.2,
+      flickerHz: 0,
+      particleDensity: 0.1
+    })
+
+    // Notify renderer
+    EventBus.emit("SAFE_MINIMAL_MODE")
+  }
+
+  // ---------------------------------------------------------------------------
+  // CONTENT SCANNING [REQ 0015, 0027-0029]
+  // ---------------------------------------------------------------------------
+
+  FUNCTION scanBlueprint(blueprint: Blueprint): ScanReport {
+    LET violations: string[] = []
+    LET suggestions: string[] = []
+
+    // Scan name
+    FOR EACH pattern IN this.MEDICAL_PATTERNS:
+      IF pattern.test(blueprint.name) THEN
+        violations.push(`Name contains medical term: ${pattern}`)
+        suggestions.push("Use experiential language instead")
+      END IF
+    END FOR
+
+    // Scan description
+    FOR EACH pattern IN this.GUARANTEE_PATTERNS:
+      IF pattern.test(blueprint.description) THEN
+        violations.push(`Description contains guarantee: ${pattern}`)
+        suggestions.push("Replace with 'designed to support' or 'may help'")
+      END IF
+    END FOR
+
+    // Scan narration
+    FOR EACH stage IN blueprint.stages:
+      FOR EACH pattern IN this.MEDICAL_PATTERNS:
+        IF pattern.test(stage.narration) THEN
+          violations.push(`Stage "${stage.name}" contains medical claim`)
+        END IF
+      END FOR
+    END FOR
+
+    IF violations.length > 0 THEN
+      RETURN { result: "REJECT", violations, suggestions }
+    ELSE
+      RETURN { result: "PASS", violations: [], suggestions: [] }
+    END IF
+  }
+
+  FUNCTION scanPersona(persona: OperatorPersona): ScanReport {
+    LET violations: string[] = []
+    LET suggestions: string[] = []
+
+    // Scan all narration strings
+    FOR EACH line IN persona.narration:
+      FOR EACH pattern IN this.COERCIVE_PATTERNS:
+        IF pattern.test(line) THEN
+          violations.push(`Coercive language detected: "${line}"`)
+          suggestions.push("Remove imperative commands and guilt language")
+        END IF
+      END FOR
+
+      FOR EACH pattern IN this.MEDICAL_PATTERNS:
+        IF pattern.test(line) THEN
+          violations.push(`Medical claim in persona: "${line}"`)
+        END IF
+      END FOR
+    END FOR
+
+    IF violations.length > 0 THEN
+      RETURN { result: "REJECT", violations, suggestions }
+    ELSE
+      RETURN { result: "PASS", violations: [], suggestions: [] }
+    END IF
+  }
+
+  FUNCTION scanImport(archive: ImportArchive): ScanReport {
+    LET allViolations: string[] = []
+    LET allSuggestions: string[] = []
+
+    // Scan each blueprint
+    FOR EACH blueprint IN archive.blueprints:
+      LET result = this.scanBlueprint(blueprint)
+      allViolations = allViolations.concat(result.violations)
+      allSuggestions = allSuggestions.concat(result.suggestions)
+    END FOR
+
+    // Scan each persona
+    FOR EACH persona IN archive.personas:
+      LET result = this.scanPersona(persona)
+      allViolations = allViolations.concat(result.violations)
+      allSuggestions = allSuggestions.concat(result.suggestions)
+    END FOR
+
+    IF allViolations.length > 0 THEN
+      RETURN { result: "WARN", violations: allViolations, suggestions: allSuggestions }
+    ELSE
+      RETURN { result: "PASS", violations: [], suggestions: [] }
+    END IF
+  }
+
+  // ---------------------------------------------------------------------------
+  // VALIDATION GATE
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Master validation function - call before any protected action
+   * Returns true if action may proceed, false if blocked
+   */
+  ASYNC FUNCTION validateAction(action: Action): Promise<boolean> {
+    // Emergency stop overrides everything
+    IF this.isEmergencyStopActive() THEN
+      RETURN false
+    END IF
+
+    // Check consent
+    LET requiredConsent = this.getRequiredConsent(action)
+    IF requiredConsent != null AND NOT this.hasConsent(requiredConsent) THEN
+      LET granted = AWAIT this.requestConsent(requiredConsent)
+      IF NOT granted THEN
+        RETURN false
+      END IF
+    END IF
+
+    // Check confirmation for high-impact
+    IF this.requiresConfirmation(action) THEN
+      LET confirmed = AWAIT ConfirmationDialog.show(action)
+      IF NOT confirmed THEN
+        RETURN false
+      END IF
+    END IF
+
+    RETURN true
+  }
+
+  PRIVATE FUNCTION getRequiredConsent(action: Action): ConsentType | null {
+    SWITCH action.type:
+      CASE "START_SESSION":
+        RETURN "SESSION"
+      CASE "ENABLE_VOICE":
+        RETURN "MICROPHONE"
+      CASE "START_RECORDING":
+        RETURN "RECORDING"
+      CASE "JOIN_MESH":
+        RETURN "MESH"
+      DEFAULT:
+        RETURN null
+    END SWITCH
+  }
+
+END MODULE
+
+// ============================================================================
+// REACT HOOK (for implementation reference)
+// ============================================================================
+
+FUNCTION useSafetyLayer(): SafetyLayerHook {
+  LET safetyLayer = useSingleton(SafetyLayer)
+
+  RETURN {
+    // Consent
+    hasConsent: safetyLayer.hasConsent,
+    requestConsent: safetyLayer.requestConsent,
+    revokeConsent: safetyLayer.revokeConsent,
+
+    // Caps
+    safetyCaps: safetyLayer.getSafetyCaps(),
+    updateCaps: safetyLayer.updateSafetyCaps,
+
+    // Emergency
+    triggerEmergencyStop: safetyLayer.triggerEmergencyStop,
+    isEmergencyActive: safetyLayer.isEmergencyStopActive(),
+
+    // Validation
+    validateAction: safetyLayer.validateAction,
+
+    // Scanning
+    scanBlueprint: safetyLayer.scanBlueprint,
+    scanPersona: safetyLayer.scanPersona
+  }
+}
