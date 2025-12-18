@@ -31,29 +31,43 @@
 namespace UCF {
 
 // ============================================================================
-// FUNDAMENTAL MATHEMATICAL CONSTANTS
+// RRRR LATTICE GENERATORS
 // ============================================================================
+// The RRRR Lattice: Λ = {φ^{-r} · e^{-d} · π^{-c} · (√2)^{-a} : (r,d,c,a) ∈ ℤ⁴}
+// See: ../../docs/RRRR_LATTICE.md for theoretical foundation
 
-/// Golden ratio (φ = (1 + √5) / 2)
+/// Golden ratio (φ = (1 + √5) / 2) - lattice generator
 constexpr float PHI = 1.6180339887498948482f;
 
-/// Inverse golden ratio (φ⁻¹ = φ - 1 = (√5 - 1) / 2)
+/// Inverse golden ratio (φ⁻¹) - fixed point of 1-[R]=[R]², UNTRUE→PARADOX boundary
 constexpr float PHI_INV = 0.6180339887498948482f;
 
-/// Critical z-coordinate (√3/2) - THE LENS boundary
-constexpr float Z_CRITICAL = 0.8660254037844386468f;
+/// Euler's number (e) - lattice generator, information-theoretic scaling
+constexpr float EULER = 2.71828182845904523536f;
 
-/// Pi constant
+/// Inverse Euler (e⁻¹) - decay constant
+constexpr float EULER_INV = 0.36787944117144232160f;
+
+/// Pi constant (π) - lattice generator, angular computations
 constexpr float PI = 3.14159265358979323846f;
 
-/// Two Pi
+/// Inverse Pi (π⁻¹) - angular normalization
+constexpr float PI_INV = 0.31830988618379067154f;
+
+/// Two Pi (2π)
 constexpr float TWO_PI = 6.28318530717958647692f;
 
-/// Square root of 2
+/// Square root of 2 (√2) - lattice generator, geometric scaling
 constexpr float SQRT2 = 1.41421356237309504880f;
 
-/// Square root of 3
+/// Inverse sqrt(2) (1/√2) - mean-field critical exponent [A]
+constexpr float SQRT2_INV = 0.70710678118654752440f;
+
+/// Square root of 3 (√3)
 constexpr float SQRT3 = 1.73205080756887729353f;
+
+/// Critical z-coordinate (√3/2) - THE LENS boundary, PARADOX→TRUE
+constexpr float Z_CRITICAL = 0.8660254037844386468f;
 
 // ============================================================================
 // PHASE BOUNDARIES

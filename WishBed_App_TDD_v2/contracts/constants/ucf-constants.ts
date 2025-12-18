@@ -20,16 +20,39 @@
  */
 
 // ============================================================================
-// GOLDEN RATIO CONSTANTS
+// RRRR LATTICE GENERATORS
 // ============================================================================
+// The RRRR Lattice: Λ = {φ^{-r} · e^{-d} · π^{-c} · (√2)^{-a} : (r,d,c,a) ∈ ℤ⁴}
+// See: ../../docs/RRRR_LATTICE.md for theoretical foundation
 
-/** Golden ratio (φ) - fundamental organizing principle */
+/** Golden ratio (φ) - lattice generator, fundamental organizing principle */
 export const PHI = 1.6180339887498948;
 
-/** Golden ratio inverse (φ⁻¹) - boundary between UNTRUE and PARADOX phases */
+/** Golden ratio inverse (φ⁻¹) - fixed point of 1-[R]=[R]², UNTRUE→PARADOX boundary */
 export const PHI_INV = 0.6180339887498948;
 
-/** √3/2 - boundary between PARADOX and TRUE phases */
+/** Euler's number (e) - lattice generator, information-theoretic scaling */
+export const EULER = 2.7182818284590452;
+
+/** Euler's number inverse (e⁻¹) - decay constant */
+export const EULER_INV = 0.3678794411714423;
+
+/** Pi (π) - lattice generator, angular/circular computations */
+export const PI = 3.1415926535897932;
+
+/** Pi inverse (π⁻¹) - angular normalization */
+export const PI_INV = 0.3183098861837907;
+
+/** Square root of 2 (√2) - lattice generator, geometric scaling */
+export const SQRT2 = 1.4142135623730950;
+
+/** Square root of 2 inverse (1/√2) - mean-field critical exponent [A] */
+export const SQRT2_INV = 0.7071067811865475;
+
+/** Square root of 3 (√3) - derived constant */
+export const SQRT3 = 1.7320508075688772;
+
+/** √3/2 - THE LENS, boundary between PARADOX and TRUE phases */
 export const Z_CRITICAL = 0.8660254037844386;
 
 // ============================================================================
