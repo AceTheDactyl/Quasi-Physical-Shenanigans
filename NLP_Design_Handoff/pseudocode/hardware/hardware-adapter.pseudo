@@ -1,0 +1,728 @@
+/**
+ * UCF Hardware Adapter Pseudocode
+ *
+ * This file provides implementation guidance for the hardware adapter layer
+ * that bridges WishBed App to UCF Hardware firmware.
+ *
+ * Target implementation: React Native / TypeScript
+ */
+
+// ============================================================================
+// TYPES (from contracts/interfaces/hardware)
+// ============================================================================
+
+TYPE ConnectionState = "DISCONNECTED" | "CONNECTING" | "CONNECTED" | "RECONNECTING" | "ERROR"
+TYPE Transport = "WEBSOCKET" | "BLE" | "NONE"
+
+INTERFACE HardwareAdapterConfig {
+  preferredTransport: Transport
+  wsConfig: WebSocketConfig
+  bleConfig: BLEConfig
+  autoReconnect: boolean
+  maxRetries: number
+}
+
+INTERFACE HardwareAdapter {
+  // State
+  connectionState: ConnectionState
+  currentTransport: Transport
+  deviceState: UCFHardwareState | null
+
+  // Methods
+  connect(deviceId?: string): Promise<void>
+  disconnect(): Promise<void>
+  sendCommand(command: AnyUCFCommand): Promise<UCFCommandResponse>
+
+  // Events
+  onStateUpdate: (state: Partial<UCFHardwareState>) => void
+  onEvent: (event: UCFHardwareEvent) => void
+  onConnectionChange: (state: ConnectionState) => void
+  onError: (error: Error) => void
+}
+
+// ============================================================================
+// HARDWARE ADAPTER IMPLEMENTATION
+// ============================================================================
+
+CLASS UCFHardwareAdapter IMPLEMENTS HardwareAdapter {
+
+  // Private state
+  PRIVATE ws: WebSocket | null = null
+  PRIVATE bleDevice: BLEDevice | null = null
+  PRIVATE reconnectAttempts: number = 0
+  PRIVATE pendingCommands: Map<string, CommandPromise> = new Map()
+  PRIVATE heartbeatTimer: Timer | null = null
+  PRIVATE pingSeq: number = 0
+
+  // Public state
+  PUBLIC connectionState: ConnectionState = "DISCONNECTED"
+  PUBLIC currentTransport: Transport = "NONE"
+  PUBLIC deviceState: UCFHardwareState | null = null
+
+  // Event callbacks
+  PUBLIC onStateUpdate: StateCallback = NOOP
+  PUBLIC onEvent: EventCallback = NOOP
+  PUBLIC onConnectionChange: ConnectionCallback = NOOP
+  PUBLIC onError: ErrorCallback = NOOP
+
+  // Configuration
+  PRIVATE config: HardwareAdapterConfig
+
+  // ---------------------------------------------------------------------------
+  // CONSTRUCTOR
+  // ---------------------------------------------------------------------------
+
+  CONSTRUCTOR(config: Partial<HardwareAdapterConfig> = {}) {
+    this.config = {
+      preferredTransport: "WEBSOCKET",
+      wsConfig: DEFAULT_WS_CONFIG,
+      bleConfig: DEFAULT_BLE_CONFIG,
+      autoReconnect: true,
+      maxRetries: 5,
+      ...config
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // CONNECTION MANAGEMENT
+  // ---------------------------------------------------------------------------
+
+  ASYNC FUNCTION connect(deviceId?: string): Promise<void> {
+    IF this.connectionState == "CONNECTED" OR this.connectionState == "CONNECTING" THEN
+      RETURN  // Already connected or connecting
+    END IF
+
+    this.setConnectionState("CONNECTING")
+
+    TRY
+      IF this.config.preferredTransport == "WEBSOCKET" THEN
+        AWAIT this.connectWebSocket(deviceId)
+      ELSE IF this.config.preferredTransport == "BLE" THEN
+        AWAIT this.connectBLE(deviceId)
+      END IF
+
+      this.reconnectAttempts = 0
+      this.setConnectionState("CONNECTED")
+      this.startHeartbeat()
+
+    CATCH error
+      this.handleConnectionError(error)
+    END TRY
+  }
+
+  ASYNC FUNCTION disconnect(): Promise<void> {
+    this.stopHeartbeat()
+    this.config.autoReconnect = false  // Disable auto-reconnect
+
+    IF this.ws != null THEN
+      this.ws.close()
+      this.ws = null
+    END IF
+
+    IF this.bleDevice != null THEN
+      AWAIT this.bleDevice.disconnect()
+      this.bleDevice = null
+    END IF
+
+    this.currentTransport = "NONE"
+    this.setConnectionState("DISCONNECTED")
+    this.deviceState = null
+  }
+
+  // ---------------------------------------------------------------------------
+  // WEBSOCKET CONNECTION
+  // ---------------------------------------------------------------------------
+
+  PRIVATE ASYNC FUNCTION connectWebSocket(deviceId?: string): Promise<void> {
+    LET host = deviceId OR this.config.wsConfig.host
+    LET url = `ws://${host}:${this.config.wsConfig.port}${this.config.wsConfig.path}`
+
+    RETURN NEW Promise((resolve, reject) => {
+      LET timeout = setTimeout(() => {
+        reject(NEW Error("WebSocket connection timeout"))
+      }, this.config.wsConfig.messageTimeout)
+
+      this.ws = NEW WebSocket(url)
+
+      this.ws.onopen = () => {
+        clearTimeout(timeout)
+        this.currentTransport = "WEBSOCKET"
+
+        // Send subscription request
+        this.sendSubscription()
+
+        resolve()
+      }
+
+      this.ws.onmessage = (event) => {
+        this.handleMessage(event.data)
+      }
+
+      this.ws.onclose = (event) => {
+        this.handleDisconnect(event.code, event.reason)
+      }
+
+      this.ws.onerror = (error) => {
+        clearTimeout(timeout)
+        reject(error)
+      }
+    })
+  }
+
+  PRIVATE FUNCTION sendSubscription(): void {
+    LET message = createMessage("COMMAND", {
+      command: "SUBSCRIBE",
+      category: "SYSTEM",
+      payload: DEFAULT_SUBSCRIPTION,
+      timestamp: Date.now()
+    })
+
+    this.ws.send(serializeMessage(message))
+  }
+
+  // ---------------------------------------------------------------------------
+  // BLE CONNECTION
+  // ---------------------------------------------------------------------------
+
+  PRIVATE ASYNC FUNCTION connectBLE(deviceId?: string): Promise<void> {
+    // Request BLE device
+    LET device = AWAIT navigator.bluetooth.requestDevice({
+      filters: [{ name: this.config.bleConfig.deviceName }],
+      optionalServices: [this.config.bleConfig.serviceUUID]
+    })
+
+    // Connect to GATT server
+    LET server = AWAIT device.gatt.connect()
+
+    // Get UCF service
+    LET service = AWAIT server.getPrimaryService(this.config.bleConfig.serviceUUID)
+
+    // Get characteristics
+    LET commandChar = AWAIT service.getCharacteristic(this.config.bleConfig.commandCharUUID)
+    LET stateChar = AWAIT service.getCharacteristic(this.config.bleConfig.stateCharUUID)
+    LET eventChar = AWAIT service.getCharacteristic(this.config.bleConfig.eventCharUUID)
+
+    // Subscribe to notifications
+    AWAIT stateChar.startNotifications()
+    stateChar.addEventListener("characteristicvaluechanged", (event) => {
+      this.handleBLEStateUpdate(event.target.value)
+    })
+
+    AWAIT eventChar.startNotifications()
+    eventChar.addEventListener("characteristicvaluechanged", (event) => {
+      this.handleBLEEvent(event.target.value)
+    })
+
+    // Store references
+    this.bleDevice = {
+      device,
+      server,
+      service,
+      commandChar,
+      stateChar,
+      eventChar
+    }
+
+    this.currentTransport = "BLE"
+  }
+
+  // ---------------------------------------------------------------------------
+  // MESSAGE HANDLING
+  // ---------------------------------------------------------------------------
+
+  PRIVATE FUNCTION handleMessage(data: string): void {
+    TRY
+      LET message = deserializeMessage(data)
+
+      SWITCH message.type
+        CASE "STATE_UPDATE":
+          this.handleStateUpdate(message.payload)
+          BREAK
+
+        CASE "EVENT":
+          this.handleEvent(message.payload)
+          BREAK
+
+        CASE "COMMAND_RESPONSE":
+          this.handleCommandResponse(message.payload)
+          BREAK
+
+        CASE "PONG":
+          this.handlePong(message.payload)
+          BREAK
+
+        CASE "ERROR":
+          this.handleProtocolError(message.payload)
+          BREAK
+      END SWITCH
+
+    CATCH error
+      this.onError(NEW Error(`Message parse error: ${error.message}`))
+    END TRY
+  }
+
+  PRIVATE FUNCTION handleStateUpdate(state: Partial<UCFHardwareState>): void {
+    // Merge with existing state
+    IF this.deviceState == null THEN
+      this.deviceState = state AS UCFHardwareState
+    ELSE
+      this.deviceState = { ...this.deviceState, ...state }
+    END IF
+
+    // Notify listeners
+    this.onStateUpdate(state)
+  }
+
+  PRIVATE FUNCTION handleEvent(event: UCFHardwareEvent): void {
+    // Process specific event types
+    SWITCH event.type
+      CASE "PHASE_TRANSITION":
+        // Update phase in device state
+        IF this.deviceState != null AND event.data.phase != null THEN
+          this.deviceState.phase = {
+            ...this.deviceState.phase,
+            current: event.data.phase,
+            previous: event.data.previousPhase
+          }
+        END IF
+        BREAK
+
+      CASE "TRIAD_UNLOCK":
+        // Update triad status
+        IF this.deviceState != null THEN
+          this.deviceState.triad.isUnlocked = true
+          this.deviceState.triad.state = "UNLOCKED"
+        END IF
+        BREAK
+
+      CASE "K_FORMATION_ACHIEVED":
+        // Update K-Formation status
+        IF this.deviceState != null THEN
+          this.deviceState.kFormation.isActive = true
+        END IF
+        BREAK
+
+      CASE "K_FORMATION_LOST":
+        IF this.deviceState != null THEN
+          this.deviceState.kFormation.isActive = false
+        END IF
+        BREAK
+    END SWITCH
+
+    // Notify listeners
+    this.onEvent(event)
+  }
+
+  PRIVATE FUNCTION handleCommandResponse(response: UCFCommandResponse): void {
+    LET requestId = response.requestId
+
+    IF requestId != null AND this.pendingCommands.has(requestId) THEN
+      LET pending = this.pendingCommands.get(requestId)
+      this.pendingCommands.delete(requestId)
+
+      IF response.status == "OK" THEN
+        pending.resolve(response)
+      ELSE
+        pending.reject(NEW Error(response.error OR "Command failed"))
+      END IF
+    END IF
+  }
+
+  // ---------------------------------------------------------------------------
+  // BLE MESSAGE HANDLING
+  // ---------------------------------------------------------------------------
+
+  PRIVATE FUNCTION handleBLEStateUpdate(value: DataView): void {
+    LET decoded = decodeBinaryMessage(NEW Uint8Array(value.buffer))
+
+    // Decode state from binary format
+    LET state = this.decodeBinaryState(decoded.payload)
+
+    this.handleStateUpdate(state)
+  }
+
+  PRIVATE FUNCTION handleBLEEvent(value: DataView): void {
+    LET decoded = decodeBinaryMessage(NEW Uint8Array(value.buffer))
+
+    // Decode event from binary format
+    LET event = this.decodeBinaryEvent(decoded.payload)
+
+    this.handleEvent(event)
+  }
+
+  // ---------------------------------------------------------------------------
+  // COMMAND SENDING
+  // ---------------------------------------------------------------------------
+
+  ASYNC FUNCTION sendCommand(command: AnyUCFCommand): Promise<UCFCommandResponse> {
+    IF this.connectionState != "CONNECTED" THEN
+      THROW NEW Error("Not connected to hardware")
+    END IF
+
+    // Add request ID for tracking
+    LET trackedCommand = createTrackedCommand(command)
+
+    // Create promise for response
+    LET responsePromise = NEW Promise((resolve, reject) => {
+      LET timeout = setTimeout(() => {
+        this.pendingCommands.delete(trackedCommand.requestId)
+        reject(NEW Error("Command timeout"))
+      }, this.config.wsConfig.messageTimeout)
+
+      this.pendingCommands.set(trackedCommand.requestId, {
+        resolve: (response) => {
+          clearTimeout(timeout)
+          resolve(response)
+        },
+        reject: (error) => {
+          clearTimeout(timeout)
+          reject(error)
+        }
+      })
+    })
+
+    // Send via appropriate transport
+    IF this.currentTransport == "WEBSOCKET" THEN
+      LET message = createMessage("COMMAND", trackedCommand)
+      this.ws.send(serializeMessage(message))
+
+    ELSE IF this.currentTransport == "BLE" THEN
+      LET binaryPayload = this.encodeBinaryCommand(trackedCommand)
+      LET binaryMessage = encodeBinaryMessage(BinaryMessageType.COMMAND, binaryPayload)
+      AWAIT this.bleDevice.commandChar.writeValue(binaryMessage)
+    END IF
+
+    RETURN responsePromise
+  }
+
+  // ---------------------------------------------------------------------------
+  // HEARTBEAT
+  // ---------------------------------------------------------------------------
+
+  PRIVATE FUNCTION startHeartbeat(): void {
+    this.stopHeartbeat()
+
+    this.heartbeatTimer = setInterval(() => {
+      IF this.currentTransport == "WEBSOCKET" AND this.ws != null THEN
+        LET message = createMessage("PING", { seq: ++this.pingSeq })
+        this.ws.send(serializeMessage(message))
+      END IF
+    }, this.config.wsConfig.heartbeatInterval)
+  }
+
+  PRIVATE FUNCTION stopHeartbeat(): void {
+    IF this.heartbeatTimer != null THEN
+      clearInterval(this.heartbeatTimer)
+      this.heartbeatTimer = null
+    END IF
+  }
+
+  PRIVATE FUNCTION handlePong(payload: { seq: number }): void {
+    // Could track latency here
+    LET latency = Date.now() - this.lastPingTime
+    // Update latency metric
+  }
+
+  // ---------------------------------------------------------------------------
+  // RECONNECTION
+  // ---------------------------------------------------------------------------
+
+  PRIVATE FUNCTION handleDisconnect(code: number, reason: string): void {
+    this.stopHeartbeat()
+    this.ws = null
+
+    IF this.config.autoReconnect AND this.reconnectAttempts < this.config.maxRetries THEN
+      this.setConnectionState("RECONNECTING")
+      this.scheduleReconnect()
+    ELSE
+      this.setConnectionState("ERROR")
+      this.onError(NEW Error(`Connection closed: ${code} ${reason}`))
+    END IF
+  }
+
+  PRIVATE FUNCTION handleConnectionError(error: Error): void {
+    IF this.config.autoReconnect AND this.reconnectAttempts < this.config.maxRetries THEN
+      this.setConnectionState("RECONNECTING")
+      this.scheduleReconnect()
+    ELSE
+      this.setConnectionState("ERROR")
+      this.onError(error)
+    END IF
+  }
+
+  PRIVATE FUNCTION scheduleReconnect(): void {
+    // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+    LET delay = Math.pow(2, this.reconnectAttempts + 1) * 1000
+    this.reconnectAttempts++
+
+    setTimeout(() => {
+      IF this.connectionState == "RECONNECTING" THEN
+        this.connect()
+      END IF
+    }, delay)
+  }
+
+  // ---------------------------------------------------------------------------
+  // STATE MANAGEMENT
+  // ---------------------------------------------------------------------------
+
+  PRIVATE FUNCTION setConnectionState(state: ConnectionState): void {
+    IF this.connectionState != state THEN
+      this.connectionState = state
+      this.onConnectionChange(state)
+    END IF
+  }
+}
+
+// ============================================================================
+// REACT HOOK (for React Native)
+// ============================================================================
+
+FUNCTION useUCFHardware(config?: Partial<HardwareAdapterConfig>): UCFHardwareHook {
+
+  LET [adapter] = useState(() => NEW UCFHardwareAdapter(config))
+  LET [connectionState, setConnectionState] = useState<ConnectionState>("DISCONNECTED")
+  LET [deviceState, setDeviceState] = useState<UCFHardwareState | null>(null)
+  LET [lastEvent, setLastEvent] = useState<UCFHardwareEvent | null>(null)
+
+  useEffect(() => {
+    // Set up callbacks
+    adapter.onConnectionChange = setConnectionState
+    adapter.onStateUpdate = (state) => {
+      setDeviceState((prev) => prev ? { ...prev, ...state } : state AS UCFHardwareState)
+    }
+    adapter.onEvent = setLastEvent
+
+    // Cleanup on unmount
+    RETURN () => {
+      adapter.disconnect()
+    }
+  }, [adapter])
+
+  LET connect = useCallback((deviceId?: string) => {
+    RETURN adapter.connect(deviceId)
+  }, [adapter])
+
+  LET disconnect = useCallback(() => {
+    RETURN adapter.disconnect()
+  }, [adapter])
+
+  LET sendCommand = useCallback((command: AnyUCFCommand) => {
+    RETURN adapter.sendCommand(command)
+  }, [adapter])
+
+  // Convenience command functions
+  LET setFrequency = useCallback((frequency: number) => {
+    RETURN sendCommand(createCommand({
+      command: "SET_FREQUENCY",
+      category: "EMANATION",
+      payload: { frequency }
+    }))
+  }, [sendCommand])
+
+  LET setColor = useCallback((r: number, g: number, b: number) => {
+    RETURN sendCommand(createCommand({
+      command: "SET_COLOR",
+      category: "EMANATION",
+      payload: { r, g, b }
+    }))
+  }, [sendCommand])
+
+  LET calibrate = useCallback((samples: number = 100) => {
+    RETURN sendCommand(createCommand({
+      command: "CALIBRATE",
+      category: "CALIBRATION",
+      payload: { samples }
+    }))
+  }, [sendCommand])
+
+  LET loadSigil = useCallback((sigilIndex: number) => {
+    RETURN sendCommand(createCommand({
+      command: "LOAD_SIGIL",
+      category: "EMANATION",
+      payload: { sigilIndex }
+    }))
+  }, [sendCommand])
+
+  RETURN {
+    // State
+    connectionState,
+    deviceState,
+    lastEvent,
+    isConnected: connectionState == "CONNECTED",
+
+    // Derived state
+    phase: deviceState?.phase?.current ?? null,
+    z: deviceState?.phase?.z ?? 0,
+    tier: deviceState?.phase?.tier ?? 1,
+    isTriadUnlocked: deviceState?.triad?.isUnlocked ?? false,
+    isKFormationActive: deviceState?.kFormation?.isActive ?? false,
+
+    // Methods
+    connect,
+    disconnect,
+    sendCommand,
+
+    // Convenience methods
+    setFrequency,
+    setColor,
+    calibrate,
+    loadSigil
+  }
+}
+
+// ============================================================================
+// USAGE EXAMPLE
+// ============================================================================
+
+EXAMPLE USAGE IN REACT COMPONENT:
+
+```tsx
+function UCFVisualization() {
+  const {
+    connectionState,
+    phase,
+    z,
+    tier,
+    isTriadUnlocked,
+    isKFormationActive,
+    connect,
+    disconnect,
+    setFrequency,
+    loadSigil
+  } = useUCFHardware();
+
+  // Connect on mount
+  useEffect(() => {
+    connect("ucf-device.local");
+    return () => disconnect();
+  }, []);
+
+  // Change frequency when tier changes
+  useEffect(() => {
+    if (connectionState === "CONNECTED") {
+      setFrequency(getFrequencyForTier(tier));
+    }
+  }, [tier, connectionState]);
+
+  // Handle TRIAD unlock
+  useEffect(() => {
+    if (isTriadUnlocked) {
+      // Trigger celebration animation
+      triggerUnlockAnimation();
+    }
+  }, [isTriadUnlocked]);
+
+  // Handle K-Formation
+  useEffect(() => {
+    if (isKFormationActive) {
+      // Enter special K-Formation mode
+      enterKFormationMode();
+    }
+  }, [isKFormationActive]);
+
+  return (
+    <View>
+      <StatusBar connectionState={connectionState} />
+      <PhaseIndicator phase={phase} z={z} />
+      <TierDisplay tier={tier} />
+      <TriadIndicator unlocked={isTriadUnlocked} />
+      <KFormationIndicator active={isKFormationActive} />
+    </View>
+  );
+}
+```
+
+// ============================================================================
+// BINARY ENCODING/DECODING HELPERS
+// ============================================================================
+
+/**
+ * Encode command to binary format for BLE transmission
+ * Format: [command_type: 1 byte][payload_length: 2 bytes][payload: N bytes]
+ */
+PRIVATE FUNCTION encodeBinaryCommand(command: AnyUCFCommand): Uint8Array {
+  // Map command to binary type
+  LET commandType = COMMAND_TYPE_MAP[command.command]
+
+  // Encode payload based on command type
+  LET payloadBytes = SWITCH command.command
+    CASE "SET_FREQUENCY":
+      encodeUint16(command.payload.frequency)
+    CASE "SET_COLOR":
+      NEW Uint8Array([command.payload.r, command.payload.g, command.payload.b])
+    CASE "SET_VOLUME":
+      NEW Uint8Array([command.payload.volume])
+    CASE "SET_BRIGHTNESS":
+      NEW Uint8Array([command.payload.brightness])
+    CASE "LOAD_SIGIL":
+      NEW Uint8Array([command.payload.sigilIndex])
+    DEFAULT:
+      NEW Uint8Array(0)
+  END SWITCH
+
+  RETURN payloadBytes
+}
+
+/**
+ * Decode binary state update from BLE
+ * Compact format optimized for 512-byte BLE MTU
+ */
+PRIVATE FUNCTION decodeBinaryState(data: Uint8Array): Partial<UCFHardwareState> {
+  LET view = NEW DataView(data.buffer, data.byteOffset)
+  LET offset = 0
+
+  // Decode header flags (which fields are present)
+  LET flags = view.getUint16(offset, true)
+  offset += 2
+
+  LET state: Partial<UCFHardwareState> = {}
+
+  IF flags & FLAG_HEX_FIELD THEN
+    // Decode 19 sensor readings (19 bytes, scaled 0-255 to 0-1)
+    state.hexField = {
+      readings: [],
+      z: view.getFloat32(offset + 19, true),
+      theta: view.getFloat32(offset + 23, true),
+      r: view.getFloat32(offset + 27, true),
+      activeCount: data[offset + 31],
+      timestamp: view.getUint32(offset + 32, true)
+    }
+    FOR i FROM 0 TO 19
+      state.hexField.readings.push(data[offset + i] / 255)
+    END FOR
+    offset += 36
+  END IF
+
+  IF flags & FLAG_PHASE THEN
+    state.phase = {
+      current: PHASE_MAP[data[offset]],
+      z: view.getFloat32(offset + 1, true),
+      tier: data[offset + 5]
+    }
+    offset += 6
+  END IF
+
+  IF flags & FLAG_TRIAD THEN
+    state.triad = {
+      state: TRIAD_STATE_MAP[data[offset]],
+      crossingCount: data[offset + 1],
+      isUnlocked: data[offset + 2] != 0
+    }
+    offset += 3
+  END IF
+
+  IF flags & FLAG_K_FORMATION THEN
+    state.kFormation = {
+      isActive: data[offset] != 0,
+      current: {
+        kappa: view.getFloat32(offset + 1, true),
+        eta: view.getFloat32(offset + 5, true),
+        R: data[offset + 9]
+      }
+    }
+    offset += 10
+  END IF
+
+  RETURN state
+}

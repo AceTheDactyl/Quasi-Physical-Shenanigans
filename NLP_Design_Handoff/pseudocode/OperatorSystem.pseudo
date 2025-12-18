@@ -1,0 +1,7 @@
+MODULE OperatorSystem
+  INPUT userIntent
+  VALIDATE via SafetyLayer
+  MAP intent -> allowedAction
+  EXECUTE action
+  SPEAK via Neutral or Persona tone
+END MODULE

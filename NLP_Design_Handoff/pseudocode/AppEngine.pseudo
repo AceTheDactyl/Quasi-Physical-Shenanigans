@@ -1,0 +1,15 @@
+MODULE WishBedAppEngine
+  STATE Idle | Initializing | Active | Integrating | Shutdown
+
+  FUNCTION startSession(mode):
+    REQUIRE consentGranted
+    SET state = Initializing
+    INIT safetyLayer
+    INIT renderer(mode)
+    SET state = Active
+
+  FUNCTION stopSession():
+    SET state = Shutdown
+    DISABLE all overlays
+    RETURN to Idle
+END MODULE
