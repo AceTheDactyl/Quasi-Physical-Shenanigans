@@ -1,0 +1,21 @@
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant V as Voice Interface
+  participant P as Parser
+  participant S as Safety Layer
+  participant E as App Engine
+  U->>V: Speak wake phrase
+  V->>V: WakeWord detected
+  V->>V: Capture window (6-10s)
+  V->>P: Transcribe + parse intent
+  P-->>V: intent + confidence
+  V->>S: validate(intent)
+  S-->>V: allow / require confirm / block
+  alt require confirm
+    V->>U: "Confirm?"
+    U->>V: "Confirm"
+  end
+  V->>E: execute(intent)
+  E-->>U: UI update + optional narration
+```

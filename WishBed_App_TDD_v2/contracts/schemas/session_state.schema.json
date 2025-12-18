@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SessionState",
+  "type": "object",
+  "required": [
+    "sessionId",
+    "mode",
+    "lane",
+    "status",
+    "overlayLinkStatus",
+    "safetyCaps",
+    "consent"
+  ],
+  "properties": {
+    "sessionId": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "Bed",
+        "Walking"
+      ]
+    },
+    "lane": {
+      "type": "string",
+      "enum": [
+        "Simulation",
+        "Interface"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Idle",
+        "Initializing",
+        "Active",
+        "Integrating",
+        "Shutdown"
+      ]
+    },
+    "overlayLinkStatus": {
+      "type": "string",
+      "enum": [
+        "Disconnected",
+        "Scanning",
+        "Binding",
+        "Calibrating",
+        "Active",
+        "Faulted"
+      ]
+    },
+    "activeArchetype": {
+      "type": "string"
+    },
+    "activeProfile": {
+      "type": "string"
+    },
+    "safetyCaps": {
+      "type": "object",
+      "required": [
+        "brightnessCap",
+        "motionCap",
+        "flickerCapHz",
+        "particleDensityCap"
+      ],
+      "properties": {
+        "brightnessCap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "motionCap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "flickerCapHz": {
+          "type": "number",
+          "minimum": 0
+        },
+        "particleDensityCap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "required": [
+        "accepted",
+        "scope"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "acceptedAt": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "microphone": {
+              "type": "boolean"
+            },
+            "recording": {
+              "type": "boolean"
+            },
+            "mesh": {
+              "type": "boolean"
+            },
+            "marketplace": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    }
+  }
+}

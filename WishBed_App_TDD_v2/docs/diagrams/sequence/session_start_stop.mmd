@@ -1,0 +1,20 @@
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant UI as UI Layer
+  participant E as App Engine
+  participant S as Safety Layer
+  participant R as Renderer
+  U->>UI: Tap "Start Session"
+  UI->>E: startSession(mode)
+  E->>S: verifyConsentAndCaps()
+  S-->>E: ok / block
+  E->>R: initRenderer(mode)
+  R-->>E: ready
+  E-->>UI: state=Active
+  U->>UI: Tap "End Session"
+  UI->>E: stopSession()
+  E->>R: fadeOutAndStop()
+  E->>S: recordShutdownEvent()
+  E-->>UI: state=Idle (re-anchored)
+```

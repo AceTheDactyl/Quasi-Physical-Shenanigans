@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: WishBed Optional Services API
+  version: 0.1.0
+  description: >
+    Optional endpoints for mesh sessions and marketplace. Core app is local-first.
+servers:
+  - url: https://api.example.com
+paths:
+  /mesh/rooms:
+    post:
+      summary: Create a mesh room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [hostUserId]
+              properties:
+                hostUserId: { type: string }
+                title: { type: string }
+      responses:
+        "201":
+          description: Created
+  /marketplace/blueprints:
+    get:
+      summary: List public blueprints
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Publish a blueprint (governed)
+      responses:
+        "201":
+          description: Created

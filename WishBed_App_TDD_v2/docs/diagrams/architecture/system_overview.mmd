@@ -1,0 +1,14 @@
+```mermaid
+flowchart TB
+  UI[UI Layer] --> Engine[WishBed App Engine]
+  Engine --> Safety[Safety Layer]
+  Engine --> Renderer[Renderer Adapter]
+  Engine --> Voice[Voice Interface (optional)]
+  Engine --> Storage[LocalVault Storage]
+  Engine --> Mesh[Mesh Service (optional)]
+  Mesh --> Market[Marketplace (optional)]
+  Renderer --> System[WishBed System (Symbolic Experience)]
+  Safety --> System
+  Safety --> Mesh
+  Safety --> Market
+```
