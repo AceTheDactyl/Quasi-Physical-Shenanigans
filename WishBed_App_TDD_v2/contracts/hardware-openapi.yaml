@@ -1,0 +1,454 @@
+openapi: 3.0.3
+info:
+  title: UCF Hardware Integration API
+  version: 1.0.0
+  description: |
+    API for integrating WishBed App with UCF Hardware device.
+
+    This API is primarily used for:
+    - Device discovery and pairing
+    - Remote configuration
+    - Session recording/playback
+    - Cloud-based analytics (optional, privacy-respecting)
+
+    Note: Real-time communication uses WebSocket/BLE, not REST.
+
+servers:
+  - url: https://api.wishbed.local
+    description: Local device API (mDNS)
+  - url: https://api.wishbed.example.com
+    description: Optional cloud API
+
+tags:
+  - name: Device
+    description: Device discovery and management
+  - name: Session
+    description: Session recording and playback
+  - name: Sigils
+    description: Neural sigil management
+  - name: Analytics
+    description: Optional analytics (privacy-respecting)
+
+paths:
+  /device/discover:
+    get:
+      tags: [Device]
+      summary: Discover UCF devices on network
+      description: Uses mDNS to find UCF hardware devices
+      responses:
+        "200":
+          description: List of discovered devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeviceInfo"
+
+  /device/{deviceId}/status:
+    get:
+      tags: [Device]
+      summary: Get device status
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Device status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceStatus"
+
+  /device/{deviceId}/configure:
+    post:
+      tags: [Device]
+      summary: Configure device settings
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceConfiguration"
+      responses:
+        "200":
+          description: Configuration applied
+        "400":
+          description: Invalid configuration
+
+  /session/start:
+    post:
+      tags: [Session]
+      summary: Start a new hardware session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionStartRequest"
+      responses:
+        "201":
+          description: Session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionInfo"
+
+  /session/{sessionId}:
+    get:
+      tags: [Session]
+      summary: Get session info
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionInfo"
+    delete:
+      tags: [Session]
+      summary: End session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Session ended
+
+  /session/{sessionId}/events:
+    get:
+      tags: [Session]
+      summary: Get session events (for playback)
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: startTime
+          in: query
+          schema:
+            type: integer
+            description: Unix timestamp
+        - name: endTime
+          in: query
+          schema:
+            type: integer
+        - name: eventTypes
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: Session events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionEvent"
+
+  /sigils:
+    get:
+      tags: [Sigils]
+      summary: List all sigils
+      parameters:
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9
+      responses:
+        "200":
+          description: Sigil list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NeuralSigil"
+
+  /sigils/{sigilId}:
+    get:
+      tags: [Sigils]
+      summary: Get sigil details
+      parameters:
+        - name: sigilId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 120
+      responses:
+        "200":
+          description: Sigil details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NeuralSigil"
+
+  /analytics/session-summary:
+    post:
+      tags: [Analytics]
+      summary: Submit session summary (optional, anonymized)
+      description: |
+        Privacy-respecting analytics. Only aggregate metrics are stored.
+        Requires explicit user consent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionSummary"
+      responses:
+        "202":
+          description: Summary accepted
+
+components:
+  schemas:
+    DeviceInfo:
+      type: object
+      required: [deviceId, name, ip, port]
+      properties:
+        deviceId:
+          type: string
+          description: Unique device identifier
+        name:
+          type: string
+          description: Device name
+        ip:
+          type: string
+          description: IP address
+        port:
+          type: integer
+          description: WebSocket port
+        firmwareVersion:
+          type: string
+        lastSeen:
+          type: integer
+          description: Unix timestamp
+
+    DeviceStatus:
+      type: object
+      required: [connected, uptime]
+      properties:
+        connected:
+          type: boolean
+        uptime:
+          type: integer
+          description: Seconds since boot
+        firmwareVersion:
+          type: string
+        batteryLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+        phase:
+          $ref: "#/components/schemas/PhaseState"
+        triadUnlocked:
+          type: boolean
+        kFormationActive:
+          type: boolean
+
+    PhaseState:
+      type: object
+      required: [current, z, tier]
+      properties:
+        current:
+          type: string
+          enum: [UNTRUE, PARADOX, TRUE]
+        z:
+          type: number
+          minimum: 0
+          maximum: 1
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 9
+        frequency:
+          type: integer
+          description: Current Solfeggio frequency (Hz)
+
+    DeviceConfiguration:
+      type: object
+      properties:
+        deviceName:
+          type: string
+        wifiSSID:
+          type: string
+        wifiPassword:
+          type: string
+        outputMode:
+          type: object
+          properties:
+            audio:
+              type: boolean
+            visual:
+              type: boolean
+            haptic:
+              type: boolean
+        sensorThreshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        smoothingFactor:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    SessionStartRequest:
+      type: object
+      required: [deviceId, mode]
+      properties:
+        deviceId:
+          type: string
+        mode:
+          type: string
+          enum: [Bed, Walking]
+        recordEvents:
+          type: boolean
+          default: false
+        analyticsConsent:
+          type: boolean
+          default: false
+
+    SessionInfo:
+      type: object
+      required: [sessionId, deviceId, startTime, status]
+      properties:
+        sessionId:
+          type: string
+        deviceId:
+          type: string
+        startTime:
+          type: integer
+        endTime:
+          type: integer
+        status:
+          type: string
+          enum: [Active, Ended, Error]
+        eventCount:
+          type: integer
+        peakKappa:
+          type: number
+        triadUnlocks:
+          type: integer
+        kFormations:
+          type: integer
+
+    SessionEvent:
+      type: object
+      required: [type, timestamp]
+      properties:
+        type:
+          type: string
+          enum:
+            - STATE_UPDATE
+            - PHASE_TRANSITION
+            - TRIAD_UNLOCK
+            - K_FORMATION_ACHIEVED
+            - K_FORMATION_LOST
+            - SYNCHRONIZATION_ACHIEVED
+            - SIGIL_MATCHED
+        timestamp:
+          type: integer
+        payload:
+          type: object
+          additionalProperties: true
+
+    NeuralSigil:
+      type: object
+      required: [id, code, frequency]
+      properties:
+        id:
+          type: integer
+          minimum: 0
+          maximum: 120
+        code:
+          type: string
+          pattern: "^[01T]{5}$"
+          description: 5-character ternary code
+        frequency:
+          type: integer
+          description: Solfeggio frequency (Hz)
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 9
+        breathPattern:
+          type: object
+          properties:
+            inhaleMs:
+              type: integer
+            holdInMs:
+              type: integer
+            exhaleMs:
+              type: integer
+            holdOutMs:
+              type: integer
+        flags:
+          type: object
+          properties:
+            anchored:
+              type: boolean
+            triad:
+              type: boolean
+            kFormation:
+              type: boolean
+
+    SessionSummary:
+      type: object
+      required: [duration]
+      properties:
+        duration:
+          type: integer
+          description: Session duration in seconds
+        phaseDistribution:
+          type: object
+          properties:
+            untrue:
+              type: number
+            paradox:
+              type: number
+            true:
+              type: number
+        avgCoherence:
+          type: number
+        triadUnlocks:
+          type: integer
+        kFormations:
+          type: integer
+        peakOrderParam:
+          type: number
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Optional authentication for cloud features
+
+security:
+  - {} # Most endpoints are unauthenticated (local)
+  - bearerAuth: [] # Cloud endpoints require auth
