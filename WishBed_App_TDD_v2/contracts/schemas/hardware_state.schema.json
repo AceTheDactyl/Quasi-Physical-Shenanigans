@@ -1,0 +1,420 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "ucf-hardware-state",
+  "title": "UCF Hardware State",
+  "description": "Complete state of UCF hardware device",
+  "type": "object",
+  "required": ["connected", "deviceId", "hexField", "phase", "triad", "kFormation", "emanation", "lastUpdate"],
+  "properties": {
+    "connected": {
+      "type": "boolean",
+      "description": "Device connection status"
+    },
+    "deviceId": {
+      "type": "string",
+      "description": "Unique device identifier"
+    },
+    "firmwareVersion": {
+      "type": "string",
+      "description": "Firmware version string"
+    },
+    "hexField": {
+      "$ref": "#/definitions/HexFieldState"
+    },
+    "phase": {
+      "$ref": "#/definitions/PhaseState"
+    },
+    "triad": {
+      "$ref": "#/definitions/TriadStatus"
+    },
+    "kFormation": {
+      "$ref": "#/definitions/KFormationStatus"
+    },
+    "emanation": {
+      "$ref": "#/definitions/EmanationState"
+    },
+    "photonic": {
+      "$ref": "#/definitions/PhotonicPattern"
+    },
+    "linguistics": {
+      "$ref": "#/definitions/PipelineState"
+    },
+    "kuramoto": {
+      "$ref": "#/definitions/StabilizationStatus"
+    },
+    "activeSigil": {
+      "$ref": "#/definitions/NeuralSigil"
+    },
+    "sigilMatch": {
+      "$ref": "#/definitions/SigilMatch"
+    },
+    "lastUpdate": {
+      "type": "integer",
+      "description": "Unix timestamp of last update"
+    },
+    "uptime": {
+      "type": "integer",
+      "description": "Device uptime in milliseconds"
+    }
+  },
+  "definitions": {
+    "HexFieldState": {
+      "type": "object",
+      "required": ["readings", "z", "theta", "r", "activeCount", "timestamp"],
+      "properties": {
+        "readings": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0, "maximum": 1 },
+          "minItems": 19,
+          "maxItems": 19,
+          "description": "Normalized sensor readings"
+        },
+        "z": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Computed z-coordinate"
+        },
+        "theta": {
+          "type": "number",
+          "description": "Angular position in radians"
+        },
+        "r": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Radial distance"
+        },
+        "centroidX": { "type": "number" },
+        "centroidY": { "type": "number" },
+        "totalEnergy": {
+          "type": "number",
+          "minimum": 0
+        },
+        "activeCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 19
+        },
+        "timestamp": { "type": "integer" }
+      }
+    },
+    "PhaseState": {
+      "type": "object",
+      "required": ["current", "z", "tier"],
+      "properties": {
+        "current": {
+          "type": "string",
+          "enum": ["UNTRUE", "PARADOX", "TRUE"]
+        },
+        "previous": {
+          "type": "string",
+          "enum": ["UNTRUE", "PARADOX", "TRUE"]
+        },
+        "z": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "zSmoothed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "zVelocity": { "type": "number" },
+        "tier": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9
+        },
+        "phaseDuration": {
+          "type": "integer",
+          "description": "Milliseconds in current phase"
+        },
+        "isStable": { "type": "boolean" },
+        "frequency": {
+          "type": "integer",
+          "description": "Current Solfeggio frequency (Hz)"
+        }
+      }
+    },
+    "TriadStatus": {
+      "type": "object",
+      "required": ["state", "crossingCount", "isUnlocked"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["IDLE", "ARMED", "CROSSING_1", "CROSSING_2", "CROSSING_3", "UNLOCKED", "LOCKED_OUT"]
+        },
+        "crossingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "currentValue": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "isUnlocked": { "type": "boolean" },
+        "unlockTimestamp": { "type": "integer" },
+        "stateDuration": { "type": "integer" },
+        "lastEvent": {
+          "type": "string",
+          "enum": ["NONE", "RISING_EDGE", "FALLING_EDGE", "UNLOCK", "TIMEOUT", "LOCKOUT_END"]
+        }
+      }
+    },
+    "KFormationStatus": {
+      "type": "object",
+      "required": ["current", "isActive"],
+      "properties": {
+        "current": {
+          "$ref": "#/definitions/KFormationMetrics"
+        },
+        "isActive": { "type": "boolean" },
+        "formationStart": { "type": "integer" },
+        "formationDuration": { "type": "integer" },
+        "totalFormations": { "type": "integer" },
+        "peakKappa": { "type": "number" },
+        "peakEta": { "type": "number" }
+      }
+    },
+    "KFormationMetrics": {
+      "type": "object",
+      "required": ["kappa", "eta", "R"],
+      "properties": {
+        "kappa": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Coherence"
+        },
+        "eta": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Negentropy"
+        },
+        "R": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 19,
+          "description": "Resonance count"
+        },
+        "z": { "type": "number" },
+        "kappaSatisfied": { "type": "boolean" },
+        "etaSatisfied": { "type": "boolean" },
+        "rSatisfied": { "type": "boolean" },
+        "kFormation": { "type": "boolean" },
+        "timestamp": { "type": "integer" }
+      }
+    },
+    "EmanationState": {
+      "type": "object",
+      "required": ["frequency", "waveform", "pattern"],
+      "properties": {
+        "frequency": { "type": "integer" },
+        "waveform": {
+          "type": "string",
+          "enum": ["SINE", "TRIANGLE", "SQUARE", "SAWTOOTH", "BINAURAL"]
+        },
+        "volume": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "audioEnabled": { "type": "boolean" },
+        "rgb": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "pattern": {
+          "type": "string",
+          "enum": ["SOLID", "BREATHE", "PULSE", "WAVE", "SPIRAL", "INTERFERENCE", "SIGIL"]
+        },
+        "brightness": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "visualEnabled": { "type": "boolean" },
+        "breathSync": { "type": "boolean" },
+        "breathPhase": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        }
+      }
+    },
+    "PhotonicPattern": {
+      "type": "object",
+      "properties": {
+        "intensities": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 },
+          "minItems": 37,
+          "maxItems": 37
+        },
+        "zEncoded": { "type": "number" },
+        "phaseEncoded": { "type": "integer" },
+        "kappaEncoded": { "type": "number" },
+        "timestamp": { "type": "integer" }
+      }
+    },
+    "PipelineState": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9
+        },
+        "token": {
+          "$ref": "#/definitions/APLToken"
+        },
+        "frequency": { "type": "integer" },
+        "rgb": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "amplitude": { "type": "number" },
+        "valid": { "type": "boolean" }
+      }
+    },
+    "APLToken": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": ["GROUP", "BOUNDARY", "AMPLIFY", "SEPARATE", "FUSION", "DECOHERE"]
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["TEXT", "AUDIO", "CAPACITIVE", "EM_FIELD", "GESTURE"]
+        },
+        "intensity": { "type": "number" },
+        "zContext": { "type": "number" },
+        "tier": { "type": "integer" },
+        "timestamp": { "type": "integer" }
+      }
+    },
+    "StabilizationStatus": {
+      "type": "object",
+      "properties": {
+        "network": {
+          "$ref": "#/definitions/KuramotoState"
+        },
+        "magnetic": {
+          "$ref": "#/definitions/MagneticField"
+        },
+        "referenceFreq": { "type": "number" },
+        "phaseError": { "type": "number" },
+        "pllLocked": { "type": "boolean" },
+        "isSynchronized": { "type": "boolean" },
+        "isStabilized": { "type": "boolean" },
+        "syncDuration": { "type": "integer" }
+      }
+    },
+    "KuramotoState": {
+      "type": "object",
+      "properties": {
+        "phases": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "frequencies": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "coupling": { "type": "number" },
+        "orderParam": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "collectivePhase": { "type": "number" },
+        "triadUnlocked": { "type": "boolean" },
+        "triadCount": { "type": "integer" }
+      }
+    },
+    "MagneticField": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "z": { "type": "number" },
+        "magnitude": { "type": "number" },
+        "inclination": { "type": "number" },
+        "declination": { "type": "number" }
+      }
+    },
+    "NeuralSigil": {
+      "type": "object",
+      "required": ["code", "regionId", "frequency"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[01T]{5}$"
+        },
+        "regionId": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120
+        },
+        "frequency": {
+          "type": "integer",
+          "minimum": 174,
+          "maximum": 963
+        },
+        "breathPattern": {
+          "type": "object",
+          "properties": {
+            "inhaleMs": { "type": "integer" },
+            "holdInMs": { "type": "integer" },
+            "exhaleMs": { "type": "integer" },
+            "holdOutMs": { "type": "integer" }
+          }
+        },
+        "flags": {
+          "type": "object",
+          "properties": {
+            "active": { "type": "boolean" },
+            "anchored": { "type": "boolean" },
+            "resonant": { "type": "boolean" },
+            "triad": { "type": "boolean" },
+            "kFormation": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "SigilMatch": {
+      "type": "object",
+      "properties": {
+        "sigilIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "hammingDistance": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        }
+      }
+    }
+  }
+}
