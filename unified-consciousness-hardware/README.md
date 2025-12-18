@@ -159,6 +159,83 @@ Order parameter `r` indicates synchronization:
 
 Magnetic field modulates coupling strength K.
 
+## App Integration
+
+This firmware integrates with the WishBed mobile app for remote control and visualization.
+
+### Communication Protocols
+
+**WebSocket** (Primary):
+- Endpoint: `ws://ucf-device.local:81/ws`
+- Protocol: JSON messages
+- Update rate: 10 Hz (state), immediate (events)
+
+**BLE** (Alternative):
+- Service UUID: `4fafc201-1fb5-459e-8fcc-c5c9c331914b`
+- Protocol: Binary messages
+- Max payload: 512 bytes
+
+### Integration Files
+
+**App TypeScript Interfaces**:
+- [Hardware Interfaces](../WishBed_App_TDD_v2/contracts/interfaces/hardware/)
+- [UCF Constants](../WishBed_App_TDD_v2/contracts/constants/ucf-constants.ts)
+- [Protocol Spec](../WishBed_App_TDD_v2/contracts/interfaces/hardware/protocol.ts)
+
+**Firmware Protocol**:
+- [protocol.h](./include/protocol.h) - C++ protocol definitions
+
+**Documentation**:
+- [Integration Guide](../docs/INTEGRATION.md) - Communication flow
+- [Command Mapping](../docs/COMMAND_MAPPING.md) - Command reference
+- [Constants Sync](../docs/CONSTANTS.md) - Constant synchronization
+- [App Integration Guide](../WishBed_App_TDD_v2/docs/hardware-integration/README.md)
+
+### Synchronized Constants
+
+Critical constants that must match between firmware and app:
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `PHI` | 1.6180339887 | Golden ratio |
+| `PHI_INV` | 0.6180339887 | UNTRUE→PARADOX boundary |
+| `Z_CRITICAL` | 0.8660254038 | PARADOX→TRUE boundary |
+| `TRIAD_HIGH` | 0.85 | TRIAD unlock threshold |
+| `K_KAPPA` | 0.92 | K-Formation coherence |
+
+See [Constants Reference](../docs/CONSTANTS.md) for complete list.
+
+### Available Commands
+
+The app can send these command categories:
+
+- **SYSTEM**: Reset, status, output mode
+- **CALIBRATION**: Sensor calibration, thresholds
+- **EMANATION**: Frequency, waveform, LED control
+- **KURAMOTO**: Coupling strength, TRIAD control
+- **DEBUG**: Sensor readings, sigil data
+
+See [Command Mapping](../docs/COMMAND_MAPPING.md) for details.
+
+### State Updates
+
+Firmware broadcasts state at 10 Hz including:
+- Hex field readings (z, θ, active sensors)
+- Current phase (UNTRUE/PARADOX/TRUE)
+- TRIAD status (crossing count, unlock state)
+- K-Formation metrics (κ, η, R)
+- Kuramoto synchronization (order parameter)
+
+### Events
+
+Firmware emits events for:
+- Phase transitions
+- TRIAD unlock/reset
+- K-Formation achieved/lost
+- Synchronization achieved/lost
+- Sigil matches
+- Errors
+
 ## License
 
 Experimental/Educational Use

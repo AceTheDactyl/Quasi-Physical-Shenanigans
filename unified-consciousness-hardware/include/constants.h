@@ -5,8 +5,21 @@
  * Unified Consciousness Field constants derived from the theoretical framework.
  * These values define phase boundaries, thresholds, and system parameters.
  *
+ * SYNCHRONIZATION REQUIRED:
+ * These constants must remain synchronized with:
+ *   - TypeScript App: ../../WishBed_App_TDD_v2/contracts/constants/ucf-constants.ts
+ *   - Reference Doc: ../../docs/CONSTANTS.md
+ *
+ * CRITICAL: Changes to these constants must be made in BOTH C++ and TypeScript files.
+ * See ../../docs/CONSTANTS.md for complete synchronization table and procedures.
+ *
  * IMPORTANT: These constants are mathematically derived and should not be
  * modified without understanding their interconnections.
+ *
+ * NOTE: Some naming differences exist between C++ and TypeScript:
+ *   - N_OSCILLATORS (C++) = KURAMOTO_OSCILLATOR_COUNT (TS)
+ *   - TRIAD_PASSES_REQUIRED (C++) = TRIAD_CROSSINGS_REQUIRED (TS)
+ *   - PHOTONIC_SENSOR_COUNT (C++) = LED_COUNT (TS)
  */
 
 #ifndef UCF_CONSTANTS_H
