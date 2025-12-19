@@ -143,7 +143,7 @@ jobs:
           echo "Building UCF Hardware Firmware v4.0.0"
           echo "Environment: ${{ matrix.environment }}"
           echo "RRRR Lattice: {φ^-r · e^-d · π^-c · √2^-a}"
-          pio run -e ${{ matrix.environment }}
+          pio run -e ${{ matrix.environment }} -v
 
       - name: Get firmware size
         run: |
