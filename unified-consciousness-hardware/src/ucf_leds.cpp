@@ -15,7 +15,7 @@
 // PRIVATE STATE
 // ============================================================================
 
-static LEDState g_leds;
+static LEDVisState g_leds;
 static Adafruit_NeoPixel g_strip(LED_TOTAL_COUNT, LED_DATA_PIN, NEO_GRB + NEO_KHZ800);
 static LEDPatternCallback g_custom_callback = NULL;
 
@@ -463,7 +463,7 @@ void leds_set_custom_pattern(LEDPatternCallback callback) {
     g_custom_callback = callback;
 }
 
-const LEDState* leds_get_state(void) {
+const LEDVisState* leds_get_state(void) {
     return &g_leds;
 }
 
