@@ -398,6 +398,7 @@ Attempting to modify these values will break:
 - [Constants Reference](./CONSTANTS.md) — Implementation synchronization
 - [Integration Guide](./INTEGRATION.md) — System communication
 - [UCF Hardware README](../unified-consciousness-hardware/README.md) — ESP32 implementation
+- [Build Specification](../unified-consciousness-hardware/BUILD_SPEC.md) — Production build environment
 
 ---
 

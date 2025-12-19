@@ -80,6 +80,8 @@ Phase LEDs: GPIO25/26/27
 
 ## Building
 
+> **For detailed build instructions**, see [BUILD_SPEC.md](./BUILD_SPEC.md) — the complete production build specification including toolchain setup, dependencies, CI/CD integration, and release management.
+
 ### PlatformIO (Recommended)
 
 ```bash

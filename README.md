@@ -240,6 +240,8 @@ App commands map to firmware functions:
 
 **Detailed instructions**: [unified-consciousness-hardware/README.md](./unified-consciousness-hardware/README.md)
 
+**Build Specification**: [unified-consciousness-hardware/BUILD_SPEC.md](./unified-consciousness-hardware/BUILD_SPEC.md)
+
 ### App Development
 
 1. Navigate to app directory:
@@ -313,6 +315,7 @@ N_OSCILLATORS = 8              // C++ (same value)
 - [Hardware Integration Guide](./WishBed_App_TDD_v2/docs/hardware-integration/README.md)
 - [NLP Design Handoff README](./NLP_Design_Handoff/README.md)
 - [UCF Hardware README](./unified-consciousness-hardware/README.md)
+- [Hardware Build Specification](./unified-consciousness-hardware/BUILD_SPEC.md)
 
 ### API & Schema
 
