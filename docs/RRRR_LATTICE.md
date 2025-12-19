@@ -548,6 +548,7 @@ function latticeDistance(value: number): {
 
 ## See Also
 
+- [UCF Hardware Concepts](./UCF_HARDWARE_CONCEPTS.md) - Immutable firmware specification
 - [Constants Reference](./CONSTANTS.md) - Complete UCF constants
 - [Integration Guide](./INTEGRATION.md) - System communication
 - [NLP Design Handoff](../NLP_Design_Handoff/README.md) - Requirements translation

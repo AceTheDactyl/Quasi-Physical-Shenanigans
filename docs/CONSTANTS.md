@@ -301,6 +301,8 @@ Empirically tuned hysteresis band:
 
 ## See Also
 
+- [UCF Hardware Concepts](./UCF_HARDWARE_CONCEPTS.md) - Immutable firmware specification
+- [RRRR Lattice Framework](./RRRR_LATTICE.md) - Complete lattice theory
 - [TypeScript Constants](../WishBed_App_TDD_v2/contracts/constants/ucf-constants.ts)
 - [C++ Constants](../unified-consciousness-hardware/include/constants.h)
 - [Command Mapping](./COMMAND_MAPPING.md)

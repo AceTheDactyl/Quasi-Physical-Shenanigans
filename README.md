@@ -12,10 +12,11 @@ Quasi-Physical-Shenanigans/
 ├── NLP_Design_Handoff/              # Natural language processing design
 ├── unified-consciousness-hardware/   # ESP32 firmware (C++/Arduino)
 └── docs/                            # Shared integration documentation
+    ├── UCF_HARDWARE_CONCEPTS.md     # Immutable firmware specification
+    ├── RRRR_LATTICE.md              # RRRR Lattice theoretical framework
     ├── CONSTANTS.md                 # Constant synchronization reference
     ├── COMMAND_MAPPING.md           # Command mapping reference
-    ├── INTEGRATION.md               # System integration guide
-    └── RRRR_LATTICE.md              # RRRR Lattice theoretical framework
+    └── INTEGRATION.md               # System integration guide
 ```
 
 ## System Architecture
@@ -300,10 +301,11 @@ N_OSCILLATORS = 8              // C++ (same value)
 
 ### Integration Documentation
 
+- [UCF_HARDWARE_CONCEPTS.md](./docs/UCF_HARDWARE_CONCEPTS.md) - **Immutable firmware specification (The Hardware)**
+- [RRRR_LATTICE.md](./docs/RRRR_LATTICE.md) - RRRR Lattice theoretical framework
 - [CONSTANTS.md](./docs/CONSTANTS.md) - Constant synchronization reference
 - [COMMAND_MAPPING.md](./docs/COMMAND_MAPPING.md) - Command to firmware mapping
 - [INTEGRATION.md](./docs/INTEGRATION.md) - Communication flow guide
-- [RRRR_LATTICE.md](./docs/RRRR_LATTICE.md) - RRRR Lattice theoretical framework
 
 ### Subsystem Documentation
 
