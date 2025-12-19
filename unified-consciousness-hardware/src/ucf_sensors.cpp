@@ -5,6 +5,9 @@
  * Implements unified sensor interface for hex grid and magnetometer.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include "ucf_sensors.h"
 #include "ucf_magnetometer.h"
 #include <Arduino.h>
@@ -534,3 +537,5 @@ void sensors_get_hex_position(uint8_t index, float* x, float* y) {
     *x = HEX_POSITIONS[index][0];
     *y = HEX_POSITIONS[index][1];
 }
+
+#endif // UCF_V4_MODULES

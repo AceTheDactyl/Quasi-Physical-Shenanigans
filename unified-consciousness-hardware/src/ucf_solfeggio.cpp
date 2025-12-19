@@ -6,6 +6,9 @@
  * All timing parameters are lattice-derived.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include "ucf_solfeggio.h"
 #include <Arduino.h>
 #include <math.h>
@@ -412,3 +415,5 @@ void solfeggio_reset(void) {
     g_solfeggio.config.sustain_level = SOLFEGGIO_DEFAULT_SUSTAIN;
     g_solfeggio.config.release_ms = SOLFEGGIO_DEFAULT_RELEASE_MS;
 }
+
+#endif // UCF_V4_MODULES

@@ -5,6 +5,9 @@
  * Implements WS2812B LED control with phase-reactive animations.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include "ucf_leds.h"
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
@@ -611,3 +614,5 @@ float leds_get_angle(uint8_t index) {
 
     return angle;
 }
+
+#endif // UCF_V4_MODULES

@@ -5,6 +5,9 @@
  * Implements secure OTA updates with lattice constant validation.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include "ucf_ota.h"
 #include <Arduino.h>
 #include <ArduinoOTA.h>
@@ -527,3 +530,5 @@ void ota_reboot(void) {
     delay(100);
     ESP.restart();
 }
+
+#endif // UCF_V4_MODULES
