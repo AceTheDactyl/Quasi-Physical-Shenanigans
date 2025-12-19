@@ -10,6 +10,9 @@
 
 namespace UCF {
 
+// Forward declaration
+uint16_t tierToSolfeggio(uint8_t tier);
+
 // POS to APL mapping table
 static const APL::Operator POS_TO_APL[] = {
     APL::Operator::GROUP,       // NOUN
