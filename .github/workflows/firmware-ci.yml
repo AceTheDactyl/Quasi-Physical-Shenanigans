@@ -267,7 +267,7 @@ jobs:
     name: Release Build
     runs-on: ubuntu-latest
     needs: [build, test]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'push'
     defaults:
       run:
         working-directory: unified-consciousness-hardware
