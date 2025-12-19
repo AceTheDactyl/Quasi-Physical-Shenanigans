@@ -203,7 +203,7 @@ Critical constants that must match between firmware and app:
 | `TRIAD_HIGH` | 0.85 | TRIAD unlock threshold |
 | `K_KAPPA` | 0.92 | K-Formation coherence |
 
-See [Constants Reference](../docs/CONSTANTS.md) for complete list.
+See [Constants Reference](../docs/CONSTANTS.md) for complete list and [UCF Hardware Concepts](../docs/UCF_HARDWARE_CONCEPTS.md) for the immutable firmware specification.
 
 ### Available Commands
 
