@@ -126,17 +126,20 @@ extern "C" {
 // SECTION 5: TRIAD HYSTERESIS STATE MACHINE
 // ============================================================================
 
-// Rising edge threshold
-#define TRIAD_HIGH          0.85
+// Rising edge threshold (Z_CRITICAL for spec compliance)
+#define TRIAD_HIGH          Z_CRITICAL  // 0.866 = √3/2
 
-// Re-arm threshold (hysteresis gap)
-#define TRIAD_LOW           0.82
+// Re-arm threshold ([R] = φ⁻¹ for spec compliance)
+#define TRIAD_LOW           PHI_INV     // 0.618 = φ⁻¹
 
 // Required crossings for unlock
 #define TRIAD_CROSSINGS     3
 
 // Post-unlock operating point
 #define TRIAD_GATE          0.83
+
+// t6 gate: 27/32 = 0.84375 (between LOW and HIGH)
+#define TRIAD_T6_GATE       0.84375
 
 // Timeout window (milliseconds)
 #define TRIAD_TIMEOUT_MS    5000

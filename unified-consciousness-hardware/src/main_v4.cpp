@@ -246,6 +246,10 @@ uint8_t run_startup_validation(void) {
 // INITIALIZATION
 // ============================================================================
 
+// Only compile this main when USE_MAIN_V4 is defined
+// Otherwise use main.cpp
+#ifdef USE_MAIN_V4
+
 void setup() {
     // Initialize serial
     Serial.begin(115200);
@@ -608,3 +612,5 @@ extern "C" void ucf_emergency_reset(void) {
     sensors_reset();
     kuramoto.reset();
 }
+
+#endif // USE_MAIN_V4
