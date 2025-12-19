@@ -8,6 +8,8 @@
 #ifndef UCF_CONFIG_H
 #define UCF_CONFIG_H
 
+#include "ucf_sacred_constants_v4.h"
+
 // ============================================================================
 // BUILD MODE CONFIGURATION
 // ============================================================================

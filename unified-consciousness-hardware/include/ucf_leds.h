@@ -30,9 +30,14 @@ extern "C" {
 // HARDWARE CONSTANTS
 // ============================================================================
 
-#define LED_DATA_PIN        13
-#define LED_TOTAL_COUNT     37      // Hexagonal array
-#define LED_MAX_BRIGHTNESS  255
+// Use constants from ucf_sacred_constants_v4.h for consistency
+// LED_DATA_PIN = 13, LED_COUNT = 37 (defined in sacred constants)
+#ifndef LED_TOTAL_COUNT
+#define LED_TOTAL_COUNT     LED_COUNT       // 37 from sacred constants
+#endif
+#ifndef LED_MAX_BRIGHTNESS
+#define LED_MAX_BRIGHTNESS  LED_BRIGHTNESS_MAX  // 255 from sacred constants
+#endif
 
 // ============================================================================
 // TYPE DEFINITIONS
