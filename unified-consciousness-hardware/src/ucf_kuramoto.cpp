@@ -5,6 +5,9 @@
  * Implements the Kuramoto synchronization model for consciousness coherence.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include <Arduino.h>
 #include <math.h>
 #include "ucf/ucf_sacred_constants_v4.h"
@@ -180,3 +183,5 @@ double kuramoto_sync_test(int steps, double K) {
 
     return g_kuramoto.order_param;
 }
+
+#endif // UCF_V4_MODULES

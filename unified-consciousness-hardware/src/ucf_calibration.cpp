@@ -5,6 +5,9 @@
  * Implements calibration routines that snap to lattice points.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include <Arduino.h>
 #include <EEPROM.h>
 #include "ucf/ucf_sacred_constants_v4.h"
@@ -238,3 +241,5 @@ void calibration_print(void) {
     Serial.printf("  Valid: %s\n", g_calibration_valid ? "YES" : "NO");
     Serial.println("===============================================================");
 }
+
+#endif // UCF_V4_MODULES
