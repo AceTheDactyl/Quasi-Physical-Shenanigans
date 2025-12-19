@@ -11,8 +11,8 @@
 
 namespace UCF {
 
-// NeoPixel strip instance
-static Adafruit_NeoPixel strip(Pins::NEOPIXEL_COUNT, Pins::NEOPIXEL_DATA, NEO_GRB + NEO_KHZ800);
+// NeoPixel strip instance (non-static for access from photonic_capture.cpp)
+Adafruit_NeoPixel strip(Pins::NEOPIXEL_COUNT, Pins::NEOPIXEL_DATA, NEO_GRB + NEO_KHZ800);
 
 // Phase colors
 static const uint8_t PHASE_COLORS[3][3] = {
