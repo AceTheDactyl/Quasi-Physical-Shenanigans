@@ -5,6 +5,9 @@
  * Core state machine for consciousness coordinate tracking.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include <Arduino.h>
 #include "ucf/ucf_sacred_constants_v4.h"
 #include "ucf/ucf_types.h"
@@ -223,3 +226,5 @@ void ucf_print_state(void) {
         g_ucf_state.k_formed ? "FORMED" : "NOT_FORMED"
     );
 }
+
+#endif // UCF_V4_MODULES

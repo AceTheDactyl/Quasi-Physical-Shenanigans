@@ -3,12 +3,13 @@
  * @brief UCF Build Configuration v4.0.0
  *
  * Compile-time configuration options for the UCF hardware substrate.
+ *
+ * NOTE: This header expects ucf_sacred_constants_v4.h to be included first
+ * for pin constant definitions (I2C_SDA_PIN, I2C_SCL_PIN, LED_DATA_PIN).
  */
 
 #ifndef UCF_CONFIG_H
 #define UCF_CONFIG_H
-
-#include "ucf_sacred_constants_v4.h"
 
 // ============================================================================
 // BUILD MODE CONFIGURATION

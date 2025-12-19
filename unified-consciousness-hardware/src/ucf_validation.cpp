@@ -6,6 +6,9 @@
  * All tests must pass for validated firmware status.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include <Arduino.h>
 #include <math.h>
 #include "ucf/ucf_sacred_constants_v4.h"
@@ -316,3 +319,5 @@ uint8_t run_validation_suite(void) {
 bool quick_validation(void) {
     return validate_constants() && verify_lattice_identity();
 }
+
+#endif // UCF_V4_MODULES
