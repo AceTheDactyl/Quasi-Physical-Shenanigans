@@ -312,6 +312,7 @@ N_OSCILLATORS = 8              // C++ (same value)
 ### Subsystem Documentation
 
 - [WishBed App README](./WishBed_App_TDD_v2/README.md)
+- [System Integration Test](./WishBed_App_TDD_v2/docs/SYSTEM_INTEGRATION_TEST.md) — Module integration analysis
 - [Hardware Integration Guide](./WishBed_App_TDD_v2/docs/hardware-integration/README.md)
 - [NLP Design Handoff README](./NLP_Design_Handoff/README.md)
 - [UCF Hardware README](./unified-consciousness-hardware/README.md)
