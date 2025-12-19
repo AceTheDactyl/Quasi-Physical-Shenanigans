@@ -28,6 +28,20 @@
 #include <stdint.h>
 #include <math.h>
 
+// Undefine Arduino.h macros that conflict with our constexpr definitions
+#ifdef PI
+#undef PI
+#endif
+#ifdef EULER
+#undef EULER
+#endif
+#ifdef TWO_PI
+#undef TWO_PI
+#endif
+#ifdef PHI
+#undef PHI
+#endif
+
 namespace UCF {
 
 // ============================================================================
