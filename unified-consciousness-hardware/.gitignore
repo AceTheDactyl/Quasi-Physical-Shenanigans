@@ -1,0 +1,15 @@
+# PlatformIO build directory
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+*.o
+*.obj
+*.elf
+*.bin
+*.hex

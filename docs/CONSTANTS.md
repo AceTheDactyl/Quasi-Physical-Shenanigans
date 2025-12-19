@@ -268,7 +268,7 @@ Properties:
 - 1/φ = φ - 1
 - Appears in sacred geometry, nature, consciousness patterns
 
-### Critical Z (√3/2)
+### Critical Z (√3/2) - THE EISENSTEIN CONNECTION
 
 ```
 z_c = √3 / 2 = 0.8660254037...
@@ -278,6 +278,51 @@ Represents "THE LENS" - the boundary where:
 - Geometric phase transition occurs
 - Visual perception shifts (PARADOX → TRUE)
 - Solfeggio frequencies transition to highest tier
+
+**CRITICAL DISCOVERY**: Z_CRITICAL = Im(ω) where ω = e^(2πi/3) is the primitive cube root of unity!
+
+```
+ω = e^(2πi/3) = -1/2 + i·√3/2
+Im(ω) = √3/2 = Z_CRITICAL = THE LENS
+```
+
+This reveals that THE LENS is the imaginary component of the Eisenstein primitive root, connecting the UCF phase boundaries to hexagonal number theory.
+
+### Eisenstein Integers (NEW - v4.1.0)
+
+Eisenstein integers are complex numbers of the form `a + bω` where:
+- `ω = e^(2πi/3) = -1/2 + i√3/2` (primitive cube root of unity)
+- `a, b ∈ ℤ`
+
+**Key Properties**:
+- `ω³ = 1` (cube root of unity)
+- `ω² = -ω - 1`
+- `1 + ω + ω² = 0`
+- Norm: `N(a + bω) = a² - ab + b²`
+
+**UCF-Eisenstein Bridge**:
+
+| Eisenstein Concept | UCF Connection |
+|-------------------|----------------|
+| Im(ω) = √3/2 | Z_CRITICAL (THE LENS) |
+| 6 Eisenstein units | 6-fold hexagonal symmetry |
+| Hex grid (q, r) → (a + bω) | Sensor coordinates as Eisenstein integers |
+| Norm = 3 → √3 = 2·Z_CRITICAL | Sensors at √3 distance link to THE LENS |
+| Norm = 7 (Eisenstein prime) | K_R_THRESHOLD = 7 active sensors |
+
+**Sensor Eisenstein Coordinates**:
+```
+         (-1,-2) (0,-2) (1,-2)
+       (-2,-1) (-1,-1) (0,-1) (1,-1)
+     (-2,0) (-1,0) (0,0) (1,0) (2,0)
+       (-1,1) (0,1) (1,1) (2,1)
+         (0,2) (1,2) (2,2)
+```
+
+**Files**:
+- Header: `unified-consciousness-hardware/include/ucf/eisenstein.h`
+- Implementation: `unified-consciousness-hardware/src/eisenstein.cpp`
+- Tests: `unified-consciousness-hardware/test/test_eisenstein.cpp`
 
 ### TRIAD Threshold (0.82 - 0.85)
 
@@ -298,11 +343,13 @@ Empirically tuned hysteresis band:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2024-12-18 | Initial synchronization document |
+| 1.1.0 | 2024-12-19 | Added Eisenstein integer framework and THE LENS discovery |
 
 ## See Also
 
 - [UCF Hardware Concepts](./UCF_HARDWARE_CONCEPTS.md) - Immutable firmware specification
 - [RRRR Lattice Framework](./RRRR_LATTICE.md) - Complete lattice theory
+- [Eisenstein Framework](../unified-consciousness-hardware/include/ucf/eisenstein.h) - Hexagonal lattice mathematics
 - [TypeScript Constants](../WishBed_App_TDD_v2/contracts/constants/ucf-constants.ts)
 - [C++ Constants](../unified-consciousness-hardware/include/constants.h)
 - [Command Mapping](./COMMAND_MAPPING.md)
