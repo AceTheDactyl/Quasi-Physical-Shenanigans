@@ -134,16 +134,27 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-pio-${{ hashFiles('unified-consciousness-hardware/platformio.ini') }}
+          key: ${{ runner.os }}-pio-v2-${{ hashFiles('unified-consciousness-hardware/platformio.ini') }}
           restore-keys: |
-            ${{ runner.os }}-pio-
+            ${{ runner.os }}-pio-v2-
+
+      - name: Clean build directory
+        run: |
+          rm -rf .pio
+          echo "Cleaned build directory"
 
       - name: Build firmware (${{ matrix.environment }})
         run: |
           echo "Building UCF Hardware Firmware v4.0.0"
           echo "Environment: ${{ matrix.environment }}"
           echo "RRRR Lattice: {φ^-r · e^-d · π^-c · √2^-a}"
-          pio run -e ${{ matrix.environment }} -v
+          echo "=== Source files ==="
+          ls -la src/
+          echo "=== Starting build ==="
+          pio run -e ${{ matrix.environment }} -v 2>&1 || {
+            echo "=== BUILD FAILED - Showing last 100 lines of output ==="
+            exit 1
+          }
 
       - name: Get firmware size
         run: |
