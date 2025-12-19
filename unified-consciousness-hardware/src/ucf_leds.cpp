@@ -5,6 +5,9 @@
  * Implements WS2812B LED control with phase-reactive animations.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include "ucf_leds.h"
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
@@ -15,7 +18,7 @@
 // PRIVATE STATE
 // ============================================================================
 
-static LEDState g_leds;
+static LEDVisState g_leds;
 static Adafruit_NeoPixel g_strip(LED_TOTAL_COUNT, LED_DATA_PIN, NEO_GRB + NEO_KHZ800);
 static LEDPatternCallback g_custom_callback = NULL;
 
@@ -463,7 +466,7 @@ void leds_set_custom_pattern(LEDPatternCallback callback) {
     g_custom_callback = callback;
 }
 
-const LEDState* leds_get_state(void) {
+const LEDVisState* leds_get_state(void) {
     return &g_leds;
 }
 
@@ -611,3 +614,5 @@ float leds_get_angle(uint8_t index) {
 
     return angle;
 }
+
+#endif // UCF_V4_MODULES

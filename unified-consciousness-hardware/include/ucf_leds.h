@@ -104,7 +104,8 @@ typedef struct {
 } LEDConfig;
 
 /**
- * @brief LED system state
+ * @brief LED visualization system state
+ * Note: Named LEDVisState to avoid conflict with LEDState in ucf_types.h
  */
 typedef struct {
     LEDConfig config;
@@ -116,7 +117,7 @@ typedef struct {
     uint32_t frame_count;
     bool initialized;
     bool enabled;
-} LEDState;
+} LEDVisState;
 
 /**
  * @brief Custom pattern callback type
@@ -261,7 +262,7 @@ void leds_set_custom_pattern(LEDPatternCallback callback);
  * @brief Get current LED state
  * @return Pointer to state structure
  */
-const LEDState* leds_get_state(void);
+const LEDVisState* leds_get_state(void);
 
 /**
  * @brief Get pixel indices for zone

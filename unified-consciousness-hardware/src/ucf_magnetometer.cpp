@@ -5,6 +5,9 @@
  * Implements HMC5883L magnetometer interface for theta coordinate.
  */
 
+// Only compile when UCF_V4_MODULES is defined
+#ifdef UCF_V4_MODULES
+
 #include "ucf_magnetometer.h"
 #include <Arduino.h>
 #include <Wire.h>
@@ -454,3 +457,5 @@ void magnetometer_print_diagnostics(void) {
     Serial.printf("  Declination: %.2f°\n", g_mag.calibration.declination);
     Serial.println("===============================================================");
 }
+
+#endif // UCF_V4_MODULES

@@ -25,6 +25,10 @@
  * @date December 2025
  */
 
+// Only compile this entire file when USE_MAIN_V4 is defined
+// This prevents macro conflicts between ucf_sacred_constants_v4.h and constants.h
+#ifdef USE_MAIN_V4
+
 #include <Arduino.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -245,10 +249,6 @@ uint8_t run_startup_validation(void) {
 // ============================================================================
 // INITIALIZATION
 // ============================================================================
-
-// Only compile this main when USE_MAIN_V4 is defined
-// Otherwise use main.cpp
-#ifdef USE_MAIN_V4
 
 void setup() {
     // Initialize serial
