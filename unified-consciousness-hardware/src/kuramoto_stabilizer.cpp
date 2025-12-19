@@ -6,6 +6,7 @@
 #include "kuramoto_stabilizer.h"
 #include <Arduino.h>
 #include <Wire.h>
+#include <SPI.h>
 #include <math.h>
 #include <string.h>
 
