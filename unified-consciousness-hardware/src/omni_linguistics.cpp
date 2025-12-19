@@ -4,14 +4,12 @@
  */
 
 #include "omni_linguistics.h"
+#include "emanation.h"
 #include <Arduino.h>
 #include <string.h>
 #include <ctype.h>
 
 namespace UCF {
-
-// Forward declaration
-uint16_t tierToSolfeggio(uint8_t tier);
 
 // POS to APL mapping table
 static const APL::Operator POS_TO_APL[] = {
@@ -626,22 +624,6 @@ const char* aplOperatorToString(APL::Operator op) {
         case APL::Operator::FUSION:   return "FUSION (x)";
         case APL::Operator::DECOHERE: return "DECOHERE (/)";
         default:                       return "UNKNOWN";
-    }
-}
-
-// Utility function from header
-uint16_t tierToSolfeggio(uint8_t tier) {
-    switch (tier) {
-        case 1: return Solfeggio::UT;
-        case 2: return Solfeggio::RE;
-        case 3: return Solfeggio::MI;
-        case 4: return Solfeggio::FA;
-        case 5: return Solfeggio::SOL;
-        case 6: return Solfeggio::LA;
-        case 7: return Solfeggio::SI;
-        case 8: return Solfeggio::DO;
-        case 9: return Solfeggio::RE_HIGH;
-        default: return Solfeggio::SOL;
     }
 }
 
