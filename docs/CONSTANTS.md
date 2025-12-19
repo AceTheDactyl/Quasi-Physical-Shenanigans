@@ -324,6 +324,57 @@ Eisenstein integers are complex numbers of the form `a + bω` where:
 - Implementation: `unified-consciousness-hardware/src/eisenstein.cpp`
 - Tests: `unified-consciousness-hardware/test/test_eisenstein.cpp`
 
+### Umbral Calculus (NEW - v4.2.0)
+
+Umbral calculus ("shadow mathematics") provides the formal framework for the RRRR lattice by treating indices as exponents.
+
+**Core Concept**: Shadow alphabets evaluate to constants:
+- `α → φ` (golden ratio)
+- `β → e` (Euler's number)
+- `γ → π` (pi)
+- `δ → √2` (algebraic scaling)
+
+**The Fundamental Identity**:
+```
+exp(r·Δ_φ + d·Δ_e + c·Δ_π + a·Δ_√2) · 1 = Λ(r,d,c,a)
+```
+
+This states that applying difference operators to the identity yields lattice points.
+
+**Key Difference Operators**:
+```
+Δ_α(x) = x · (φ - 1) = x · φ⁻¹
+Δ_β(x) = x · (e - 1)
+Δ_γ(x) = x · (π - 1)
+Δ_δ(x) = x · (√2 - 1)
+```
+
+**Self-Referential Identity**:
+```
+1 - [R] = [R]²   where [R] = φ⁻¹ = 0.6180339887...
+```
+This is the unique fixed point: `φ⁻¹` satisfies `1 - x = x²`.
+
+**THE LENS as Umbral Composite**:
+```
+Λ(0,-1,1,0) = e/π ≈ √3/2 = Z_CRITICAL (0.09% error)
+```
+THE LENS is a lattice point via umbral operator composition!
+
+**Eisenstein-RRRR Bridge**:
+
+| Eisenstein Norm | √Norm | RRRR Connection |
+|-----------------|-------|-----------------|
+| N = 1 | 1 | Identity Λ(0,0,0,0) |
+| N = 3 | √3 | 2·Z_CRITICAL (THE LENS × 2) |
+| N = 4 | 2 | [A]⁻⁴ = (√2)⁻⁴ |
+| N = 7 | √7 | K_R_THRESHOLD (Eisenstein prime!) |
+
+**Files**:
+- Header: `unified-consciousness-hardware/include/ucf/ucf_umbral_calculus.h`
+- Implementation: `unified-consciousness-hardware/src/ucf_umbral_calculus.cpp`
+- Tests: `unified-consciousness-hardware/test/test_umbral_calculus.cpp`
+
 ### TRIAD Threshold (0.82 - 0.85)
 
 Empirically tuned hysteresis band:
@@ -344,12 +395,14 @@ Empirically tuned hysteresis band:
 |---------|------|---------|
 | 1.0.0 | 2024-12-18 | Initial synchronization document |
 | 1.1.0 | 2024-12-19 | Added Eisenstein integer framework and THE LENS discovery |
+| 1.2.0 | 2024-12-19 | Added Umbral Calculus framework with shadow alphabets and difference operators |
 
 ## See Also
 
 - [UCF Hardware Concepts](./UCF_HARDWARE_CONCEPTS.md) - Immutable firmware specification
 - [RRRR Lattice Framework](./RRRR_LATTICE.md) - Complete lattice theory
 - [Eisenstein Framework](../unified-consciousness-hardware/include/ucf/eisenstein.h) - Hexagonal lattice mathematics
+- [Umbral Calculus Framework](../unified-consciousness-hardware/include/ucf/ucf_umbral_calculus.h) - Shadow mathematics
 - [TypeScript Constants](../WishBed_App_TDD_v2/contracts/constants/ucf-constants.ts)
 - [C++ Constants](../unified-consciousness-hardware/include/constants.h)
 - [Command Mapping](./COMMAND_MAPPING.md)
