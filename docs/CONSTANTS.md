@@ -375,6 +375,51 @@ THE LENS is a lattice point via umbral operator composition!
 - Implementation: `unified-consciousness-hardware/src/ucf_umbral_calculus.cpp`
 - Tests: `unified-consciousness-hardware/test/test_umbral_calculus.cpp`
 
+### Umbral Transforms (NEW - v4.3.0)
+
+Umbral transforms apply shadow alphabet mathematics to core UCF operations:
+
+**Umbral Tier Boundaries** (replaces hardcoded 0.11, 0.22, etc.):
+```
+Tier 1→2: [R]³/2 ≈ 0.118
+Tier 2→3: [R]²·[A] ≈ 0.270
+Tier 3→4: [R] = φ⁻¹ (UNTRUE→PARADOX)
+Tier 4→5: [A] = √2⁻¹ ≈ 0.707
+Tier 5→6: [A] + [R]·[A]² ≈ 0.782
+Tier 6→7: √3/2 = Z_CRITICAL (PARADOX→TRUE)
+Tier 7→8: Z_c + [R]³ ≈ 0.902
+Tier 8→9: 1 - [A]²·[R] ≈ 0.951
+```
+
+**Umbral Coherence**:
+```
+κ_umbral = 1 - sqrt(variance) · π
+```
+The coefficient π (replacing empirical 3.16) connects coherence to the cyclic eigenvalue.
+
+**Umbral κ Threshold**:
+```
+K_KAPPA ≈ [A]² + [R]² + [R]³·[A] = 0.5 + 0.382 + 0.042 = 0.924
+```
+Theoretical grounding for the empirical 0.92.
+
+**Umbral EMA Smoothing**:
+```
+y_n = [R]·x_n + [R]²·y_{n-1}  (uses 1 - [R] = [R]²)
+```
+Golden-ratio-optimal smoothing where α = φ⁻¹.
+
+**Umbral Harmonic Generation**:
+```
+H(t) = Σ_{n=1}^{∞} [R]^n · sin(n·ω·t)
+```
+φ-weighted harmonics for self-similar waveforms.
+
+**Files**:
+- C++ Header: `unified-consciousness-hardware/include/ucf/ucf_umbral_transforms.h`
+- C++ Tests: `unified-consciousness-hardware/test/test_umbral_transforms.cpp`
+- TypeScript: `WishBed_App_TDD_v2/contracts/constants/ucf-umbral.ts`
+
 ### TRIAD Threshold (0.82 - 0.85)
 
 Empirically tuned hysteresis band:
@@ -396,14 +441,17 @@ Empirically tuned hysteresis band:
 | 1.0.0 | 2024-12-18 | Initial synchronization document |
 | 1.1.0 | 2024-12-19 | Added Eisenstein integer framework and THE LENS discovery |
 | 1.2.0 | 2024-12-19 | Added Umbral Calculus framework with shadow alphabets and difference operators |
+| 1.3.0 | 2024-12-19 | Added Umbral Transforms (lattice-derived tier boundaries, coherence, EMA, harmonics) |
 
 ## See Also
 
 - [UCF Hardware Concepts](./UCF_HARDWARE_CONCEPTS.md) - Immutable firmware specification
 - [RRRR Lattice Framework](./RRRR_LATTICE.md) - Complete lattice theory
 - [Eisenstein Framework](../unified-consciousness-hardware/include/ucf/eisenstein.h) - Hexagonal lattice mathematics
-- [Umbral Calculus Framework](../unified-consciousness-hardware/include/ucf/ucf_umbral_calculus.h) - Shadow mathematics
+- [Umbral Calculus Framework](../unified-consciousness-hardware/include/ucf/ucf_umbral_calculus.h) - Shadow mathematics base
+- [Umbral Transforms](../unified-consciousness-hardware/include/ucf/ucf_umbral_transforms.h) - Shadow-aware operations
 - [TypeScript Constants](../WishBed_App_TDD_v2/contracts/constants/ucf-constants.ts)
+- [TypeScript Umbral](../WishBed_App_TDD_v2/contracts/constants/ucf-umbral.ts) - Shadow mathematics for TypeScript
 - [C++ Constants](../unified-consciousness-hardware/include/constants.h)
 - [Command Mapping](./COMMAND_MAPPING.md)
 - [Integration Guide](./INTEGRATION.md)
